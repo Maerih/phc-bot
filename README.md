@@ -16,7 +16,7 @@ It searches **jobs, internships, scholarships, fellowships, research posts, gran
 curl -fsSL https://raw.githubusercontent.com/Maerih/phc-bot/main/install.sh | bash
 ```
 
-It downloads the bot into `~/phc-bot` and runs `./ctl.sh start`, which checks the machine, gets Docker (a private copy if none is installed, no sudo), asks a few setup questions, builds, starts the database and the bot, and shows the WhatsApp QR code in the terminal. **Update later with `./ctl.sh update`**; it pulls the latest version from GitHub and keeps the session, settings and data. `./ctl.sh doctor` runs every check without changing anything.
+It downloads the bot into `~/phc-bot` and runs `./ctl.sh start`, which checks the machine, installs anything small that is missing, gets Docker (its own copy if none is installed), asks a few setup questions, builds, starts the database and the bot, and shows the WhatsApp QR code in the terminal. **Update later with `./ctl.sh update`**; it pulls the latest version from GitHub and keeps the session, settings and data. `./ctl.sh doctor` runs every check without changing anything.
 
 **Deploying:**
 - [docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md) — **recommended.** The install above, step by step.

@@ -6,7 +6,7 @@ The recommended way to run the platform. Unlike shared hosting, a VPS gives the 
 
 ## Install: one command
 
-Log in to the server over SSH, as the user who will run the bot (not root), and run:
+Log in to the server over SSH, as root or as any user, and run:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Maerih/phc-bot/main/install.sh | bash
@@ -17,7 +17,7 @@ That downloads the bot from GitHub into `~/phc-bot` and runs `./ctl.sh start`, w
 | Step | What happens |
 |---|---|
 | 1. Checking this machine | Linux and CPU type, the tools it needs, disk space, memory |
-| 2. Docker | Uses Docker if it is installed and you can use it. Otherwise downloads a private copy into the bot's folder and runs it as your user, with no sudo and nothing installed system-wide. Checks the bot's port is free. |
+| 2. Docker | Uses Docker if it is installed and you can use it. Otherwise downloads the bot's own copy into its folder: as root it runs as an ordinary daemon with nothing to set up; as another user it runs rootless. Checks the bot's port is free. |
 | 3. Configuration | First run: asks a few questions and writes `.env` (see below). Every run: checks the admin numbers, tests the Gemini key with Google, and says which features are on |
 | 4. Building the bot | Builds the bot, but only when the code changed since the last build. Then runs the bot's own settings check, so a typo in `.env` is reported here instead of crashing the bot |
 | 5. Database | Creates PostgreSQL and its tables on the first run; starts it after that |
@@ -44,7 +44,10 @@ The first run takes a few minutes, mostly downloading. Later runs take seconds.
 | `git` and `curl` | On almost every server image already. If not: `sudo apt install git curl` |
 | A WhatsApp number | **Its own number**, not one another bot is using. |
 
-If Docker is not installed, the private copy needs a few things from the system that only an administrator can set up, once: the `uidmap` package, a user-ID range for your user and, on Ubuntu 23.10 and later, an AppArmor rule. `./ctl.sh start` checks all of them, and **when one is missing it prints the exact command to run**. Nothing is guessed.
+Missing pieces are installed, not reported:
+
+- **As root**, anything missing (a tool such as `curl`, or `iptables` for Docker's networking) is installed with the system's package manager, and Docker needs no further setup. Inside its container the bot still runs as an ordinary unprivileged user, never as root.
+- **As another user**, Docker runs rootless, which needs the `uidmap` package, a user-ID range for your user and, on Ubuntu 23.10 and later, an AppArmor rule. `start` lists what is missing and offers to set it all up with `sudo`, which asks for your password once. Without sudo rights, it prints the exact commands for an administrator.
 
 If you have sudo and would rather install Docker system-wide, do it first. The bot then uses it, and Docker brings the bot back after a reboot by itself:
 
@@ -124,7 +127,7 @@ The database lives in the Docker volume `phc-pgdata`. With the private Docker co
 
 ### After a reboot
 
-With Docker installed system-wide, the bot comes back by itself. With the private copy, the first `start` asks whether to set that up; say yes, or later run `./ctl.sh autostart on`. It adds one small service file for your user. If the server needs an administrator to allow it to start before anyone logs in, it prints the one command to run.
+With Docker installed system-wide, the bot comes back by itself. With the bot's own copy, the first `start` asks whether to set that up; say yes, or later run `./ctl.sh autostart on`. As root it adds a system service that starts at boot; as another user, a user service. If a user's service needs an administrator to allow it to start before anyone logs in, it prints the one command to run.
 
 ---
 
@@ -164,7 +167,7 @@ Keep the bot listening on `127.0.0.1` (the default): the proxy reaches it locall
 
 Start with `./ctl.sh doctor`: it runs every check and marks problems with ✗, with the fix next to each.
 
-**An item is marked ✗ under Docker.** It is a one-time system setting only an administrator can change; the exact command is printed beside it. Alternatively, install Docker system-wide (above).
+**An item is marked ✗ under Docker.** Run `./ctl.sh start` in a terminal: it offers to fix them with sudo. Without sudo rights, an administrator runs the command printed beside each item, once. Or run the install as root, which needs none of them.
 
 **`Some settings in .env are not valid`.** The lines above it name the setting and the allowed values. Fix `.env`, or run `./ctl.sh setup`. The running bot is left as it was until the settings are valid.
 

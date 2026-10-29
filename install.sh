@@ -8,7 +8,10 @@
 # there), then hands over to ./ctl.sh start, which checks the machine, gets
 # Docker, asks the setup questions, builds, starts and shows the QR code.
 #
-# Nothing is installed system-wide and nothing needs sudo. Options:
+# Run it as root or as any user. Docker comes as the bot's own copy in its
+# folder. As root, anything small that is missing (curl, iptables) is
+# installed; as another user, start offers to set up what rootless Docker
+# needs, through sudo. Options:
 #   PHC_DIR=/path/to/folder   where to put it (default: ~/phc-bot)
 #   PHC_REPO=<git url>        a fork or mirror (default: the GitHub repo)
 #

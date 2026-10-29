@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Public Health Colosseum — Opportunities</title>
+<meta name="description" content="Search jobs, internships, scholarships, fellowships, research posts and events in public health.">
+<style>
+  /* ── Tokens ─────────────────────────────────────────────── */
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #f0f2f5;
+    --line: #dfe3e8;
+    --text: #1a2027;
+    --text-dim: #5b6672;
+    --text-faint: #8a949e;
+    --primary: #0f6e63;
+    --primary-ink: #ffffff;
+    --primary-soft: #e3f1ef;
+    --urgent: #a8431a;
+    --urgent-soft: #fbeae2;
+    --warn: #8a5a00;
+    --warn-soft: #fdf3dd;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1419;
+      --surface: #171d24;
+      --surface-2: #1e252d;
+      --line: #2b343d;
+      --text: #e6eaee;
+      --text-dim: #a2adb8;
+      --text-faint: #76818c;
+      --primary: #4db6a7;
+      --primary-ink: #06120f;
+      --primary-soft: #16302c;
+      --urgent: #e5a07c;
+      --urgent-soft: #352016;
+      --warn: #d9b05f;
+      --warn-soft: #2e2415;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1419; --surface: #171d24; --surface-2: #1e252d; --line: #2b343d;
+    --text: #e6eaee; --text-dim: #a2adb8; --text-faint: #76818c;
+    --primary: #4db6a7; --primary-ink: #06120f; --primary-soft: #16302c;
+    --urgent: #e5a07c; --urgent-soft: #352016; --warn: #d9b05f; --warn-soft: #2e2415;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px 64px; }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    padding: 20px 0 22px;
+    margin-bottom: 20px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .brand h1 { margin: 0; font-size: 1.3rem; letter-spacing: -.02em; }
+  .brand .tag { color: var(--text-dim); font-size: .85rem; }
+  .lede { margin: 8px 0 0; color: var(--text-dim); font-size: .92rem; }
+
+  /* ── Search form ────────────────────────────────────────── */
+  form { margin: 18px 0 0; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .field { flex: 1 1 100%; display: flex; flex-direction: column; gap: 5px; }
+  .field.half { flex: 1 1 calc(50% - 4px); min-width: 160px; }
+  label { font-size: .78rem; font-weight: 650; color: var(--text-dim); text-transform: uppercase; letter-spacing: .05em; }
+  input[type="text"] {
+    width: 100%; padding: 12px 14px; font: inherit;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px;
+  }
+  input[type="text"]:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; border-color: var(--primary); }
+  input::placeholder { color: var(--text-faint); }
+
+  button { font: inherit; cursor: pointer; }
+  .go {
+    margin-top: 12px; width: 100%; padding: 13px 18px; font-weight: 700;
+    background: var(--primary); color: var(--primary-ink);
+    border: 1px solid var(--primary); border-radius: 10px;
+  }
+  .go:disabled { opacity: .6; cursor: progress; }
+
+  .chips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 14px; }
+  .chip {
+    padding: 7px 13px; font-size: .86rem; border-radius: 999px;
+    background: var(--surface); color: var(--text-dim);
+    border: 1px solid var(--line);
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--primary-soft); color: var(--primary);
+    border-color: var(--primary); font-weight: 650;
+  }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; color: var(--text-dim); font-size: .9rem; }
+  .toggle input { width: 17px; height: 17px; accent-color: var(--primary); }
+
+  /* ── Status ─────────────────────────────────────────────── */
+  .status { margin: 22px 0 14px; color: var(--text-dim); font-size: .9rem; min-height: 22px; }
+  .banner {
+    padding: 11px 14px; border-radius: 10px; font-size: .88rem;
+    border: 1px solid; margin-bottom: 14px;
+  }
+  .banner.warn { background: var(--warn-soft); color: var(--warn); border-color: currentColor; }
+
+  .skeleton { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
+  .bar { height: 11px; border-radius: 5px; background: var(--surface-2); margin-bottom: 9px; animation: pulse 1.3s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
+  @media (prefers-reduced-motion: reduce) { .bar { animation: none } }
+
+  /* ── Result cards ───────────────────────────────────────── */
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 18px; margin-bottom: 12px; box-shadow: var(--shadow);
+  }
+  .card h2 { margin: 0 0 5px; font-size: 1.05rem; line-height: 1.35; letter-spacing: -.01em; }
+  .org { color: var(--text-dim); font-size: .92rem; margin: 0 0 11px; }
+  .meta { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 11px; }
+  .pill {
+    font-size: .78rem; padding: 4px 9px; border-radius: 6px;
+    background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--line);
+  }
+  .pill.type { background: var(--primary-soft); color: var(--primary); border-color: transparent; font-weight: 650; }
+  .pill.urgent { background: var(--urgent-soft); color: var(--urgent); border-color: transparent; font-weight: 650; }
+  .summary { margin: 0 0 13px; color: var(--text-dim); font-size: .9rem; }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .apply {
+    display: inline-block; padding: 9px 15px; font-size: .9rem; font-weight: 650;
+    text-decoration: none; border-radius: 9px;
+    background: var(--primary); color: var(--primary-ink); border: 1px solid var(--primary);
+  }
+  .src { color: var(--text-faint); font-size: .8rem; }
+
+  .more {
+    display: block; width: 100%; margin-top: 8px; padding: 13px;
+    background: var(--surface); color: var(--text); font-weight: 650;
+    border: 1px solid var(--line); border-radius: 10px;
+  }
+
+  /* ── Empty state ────────────────────────────────────────── */
+  .empty { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 20px; text-align: center; }
+  .empty h2 { margin: 0 0 8px; font-size: 1.05rem; }
+  .empty p { margin: 0 0 6px; color: var(--text-dim); font-size: .92rem; }
+  .empty ul { margin: 12px 0 0; padding: 0; list-style: none; display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; }
+
+  footer { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--text-faint); font-size: .8rem; }
+  footer p { margin: 0 0 6px; }
+  .sr {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <h1>Public Health Colosseum</h1>
+      <span class="tag">Opportunities</span>
+    </div>
+    <p class="lede">Jobs, internships, scholarships, fellowships, research posts and events — in one place.</p>
+
+    <form id="search-form">
+      <div class="row">
+        <div class="field">
+          <label for="q">What are you looking for?</label>
+          <input type="text" id="q" name="q" placeholder="e.g. epidemiology, health informatics, data analyst" autocomplete="off">
+        </div>
+        <div class="field half">
+          <label for="location">Where</label>
+          <input type="text" id="location" name="location" placeholder="e.g. Nairobi, Kenya, Africa" autocomplete="off">
+        </div>
+        <div class="field half">
+          <label for="remote-wrap">Working style</label>
+          <span class="toggle" id="remote-wrap">
+            <input type="checkbox" id="remote"><label for="remote" style="text-transform:none;letter-spacing:0;font-weight:400;font-size:.9rem">Remote only</label>
+          </span>
+        </div>
+      </div>
+
+      <div class="chips" role="group" aria-label="Opportunity type">
+        <button type="button" class="chip" data-type="" aria-pressed="true">Everything</button>
+        <button type="button" class="chip" data-type="JOB" aria-pressed="false">Jobs</button>
+        <button type="button" class="chip" data-type="INTERNSHIP" aria-pressed="false">Internships</button>
+        <button type="button" class="chip" data-type="SCHOLARSHIP" aria-pressed="false">Scholarships</button>
+        <button type="button" class="chip" data-type="FELLOWSHIP" aria-pressed="false">Fellowships</button>
+        <button type="button" class="chip" data-type="RESEARCH" aria-pressed="false">Research</button>
+        <button type="button" class="chip" data-type="TRAINING" aria-pressed="false">Training</button>
+        <button type="button" class="chip" data-type="CONFERENCE" aria-pressed="false">Conferences</button>
+      </div>
+
+      <button type="submit" class="go" id="go">Search opportunities</button>
+    </form>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banner-slot" aria-live="polite"></div>
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+  <div id="results"></div>
+  <div id="more-slot"></div>
+</main>
+
+<footer class="wrap">
+  <p id="sources-line">Listings come from third-party sources and link to the original posting.</p>
+  <p><strong>Always apply through the official page.</strong> Unless a listing is marked verified, it has not been independently checked — confirm the details before applying, and never pay to apply.</p>
+  <p>Powered by SCIAT SOLUTIONS.</p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var form = document.getElementById('search-form');
+  var qInput = document.getElementById('q');
+  var locInput = document.getElementById('location');
+  var remoteInput = document.getElementById('remote');
+  var goButton = document.getElementById('go');
+  var statusEl = document.getElementById('status');
+  var resultsEl = document.getElementById('results');
+  var moreSlot = document.getElementById('more-slot');
+  var bannerSlot = document.getElementById('banner-slot');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+
+  var state = { type: '', page: 1, busy: false };
+
+  // ── helpers ────────────────────────────────────────────────
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    // textContent, never innerHTML: titles and organisation names come from
+    // third-party feeds and must never be able to inject markup.
+    if (text !== undefined && text !== null) node.textContent = String(text);
+    return node;
+  }
+
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+  function formatDeadline(iso, daysLeft) {
+    var date = new Date(iso);
+    var label = date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    if (daysLeft === null || daysLeft === undefined) return { text: 'Closes ' + label, urgent: false };
+    if (daysLeft <= 0) return { text: 'Closes today — ' + label, urgent: true };
+    if (daysLeft === 1) return { text: '1 day left — ' + label, urgent: true };
+    if (daysLeft <= 7) return { text: daysLeft + ' days left — ' + label, urgent: true };
+    return { text: 'Closes ' + label, urgent: false };
+  }
+
+  function placeLabel(item) {
+    if (item.remote === true) {
+      // Avoid "Remote — Remote" when the source already says so in the location.
+      if (!item.location || /^remote$/i.test(item.location.trim())) return 'Remote';
+      return 'Remote — ' + item.location;
+    }
+    if (item.location) return item.location;
+    return 'Location not stated';
+  }
+
+  // ── rendering ──────────────────────────────────────────────
+  function renderCard(item) {
+    var card = el('article', 'card');
+
+    card.appendChild(el('h2', null, item.title));
+    card.appendChild(el('p', 'org', item.organization || 'Organisation not stated'));
+
+    var meta = el('div', 'meta');
+    meta.appendChild(el('span', 'pill type', item.typeLabel));
+    meta.appendChild(el('span', 'pill', placeLabel(item)));
+
+    if (item.deadline) {
+      var dl = formatDeadline(item.deadline, item.daysLeft);
+      meta.appendChild(el('span', 'pill' + (dl.urgent ? ' urgent' : ''), dl.text));
+    } else {
+      // Stated plainly rather than hidden: "no deadline shown" and "applications
+      // closed" are different facts.
+      meta.appendChild(el('span', 'pill', 'Deadline not stated'));
+    }
+
+    if (item.categories && item.categories.length) {
+      meta.appendChild(el('span', 'pill', item.categories[0]));
+    }
+    if (item.educationLevel) {
+      meta.appendChild(el('span', 'pill', item.educationLevel.charAt(0) + item.educationLevel.slice(1).toLowerCase()));
+    }
+    if (item.compensation) {
+      meta.appendChild(el('span', 'pill', item.compensation));
+    }
+    card.appendChild(meta);
+
+    if (item.summary) card.appendChild(el('p', 'summary', item.summary));
+
+    var foot = el('div', 'foot');
+    if (item.applicationUrl) {
+      var link = el('a', 'apply', 'View & apply');
+      link.href = item.applicationUrl;
+      link.target = '_blank';
+      // noopener/noreferrer: these are untrusted third-party destinations.
+      link.rel = 'noopener noreferrer';
+      foot.appendChild(link);
+    } else {
+      foot.appendChild(el('span', 'src', 'No application link provided'));
+    }
+    foot.appendChild(el('span', 'src', 'Source: ' + item.sourceName));
+    card.appendChild(foot);
+
+    return card;
+  }
+
+  function renderSkeletons(count) {
+    clear(resultsEl);
+    for (var i = 0; i < count; i++) {
+      var s = el('div', 'skeleton');
+      var widths = ['70%', '40%', '90%'];
+      for (var j = 0; j < widths.length; j++) {
+        var bar = el('div', 'bar');
+        bar.style.width = widths[j];
+        s.appendChild(bar);
+      }
+      resultsEl.appendChild(s);
+    }
+  }
+
+  function renderEmpty(data) {
+    var box = el('div', 'empty');
+    box.appendChild(el('h2', null, 'No matches found'));
+    box.appendChild(el('p', null, 'Nothing in the sources we searched fits that right now.'));
+    box.appendChild(el('p', null, 'Try a broader term, remove the location, or switch the type filter.'));
+
+    var list = el('ul');
+    ['public health', 'epidemiology', 'health data', 'research'].forEach(function (term) {
+      var li = document.createElement('li');
+      var b = el('button', 'chip', term);
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        qInput.value = term;
+        locInput.value = '';
+        setType('');
+        runSearch(1);
+      });
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+    box.appendChild(list);
+    clear(resultsEl);
+    resultsEl.appendChild(box);
+  }
+
+  function renderBanner(data) {
+    clear(bannerSlot);
+    if (data && data.degraded && data.unavailableSources && data.unavailableSources.length) {
+      var text = 'Some sources could not be reached (' + data.unavailableSources.join(', ') +
+        '), so this list may be incomplete.';
+      bannerSlot.appendChild(el('div', 'banner warn', text));
+    }
+  }
+
+  // ── search ─────────────────────────────────────────────────
+  function buildUrl(page) {
+    var params = new URLSearchParams();
+    if (qInput.value.trim()) params.set('q', qInput.value.trim());
+    if (locInput.value.trim()) params.set('location', locInput.value.trim());
+    if (state.type) params.set('type', state.type);
+    if (remoteInput.checked) params.set('remote', 'true');
+    params.set('page', String(page));
+    return '/api/search?' + params.toString();
+  }
+
+  function runSearch(page) {
+    if (state.busy) return;
+    state.busy = true;
+    state.page = page;
+    goButton.disabled = true;
+    clear(moreSlot);
+
+    if (page === 1) {
+      statusEl.textContent = 'Searching…';
+      renderSkeletons(3);
+    } else {
+      statusEl.textContent = 'Loading more…';
+    }
+
+    fetch(buildUrl(page), { headers: { accept: 'application/json' } })
+      .then(function (response) {
+        return response.json().then(function (body) {
+          return { ok: response.ok, status: response.status, body: body };
+        });
+      })
+      .then(function (res) {
+        if (!res.ok) {
+          clear(bannerSlot);
+          if (page === 1) clear(resultsEl);
+          var msg = (res.body && res.body.message) ||
+            'Search is unavailable right now. Please try again shortly.';
+          statusEl.textContent = '';
+          bannerSlot.appendChild(el('div', 'banner warn', msg));
+          return;
+        }
+
+        var data = res.body;
+        renderBanner(data);
+
+        if (page === 1) clear(resultsEl);
+
+        if (!data.results.length && page === 1) {
+          statusEl.textContent = '';
+          renderEmpty(data);
+          return;
+        }
+
+        data.results.forEach(function (item) { resultsEl.appendChild(renderCard(item)); });
+
+        var shown = Math.min(data.page * data.pageSize, data.total);
+        statusEl.textContent = 'Showing ' + shown + ' of ' + data.total +
+          ' · searched in ' + (data.durationMs / 1000).toFixed(1) + 's';
+
+        if (data.hasMore) {
+          var more = el('button', 'more', 'Show more');
+          more.type = 'button';
+          more.addEventListener('click', function () { runSearch(data.page + 1); });
+          moreSlot.appendChild(more);
+        }
+
+        if (data.attributions && data.attributions.length) {
+          // Several sources licence their data on condition of visible credit.
+          document.getElementById('sources-line').textContent =
+            'Listings ' + data.attributions.join(', ') + '. They link to the original posting.';
+        }
+      })
+      .catch(function () {
+        clear(bannerSlot);
+        statusEl.textContent = '';
+        bannerSlot.appendChild(el('div', 'banner warn',
+          'Could not reach the search service. Check your connection and try again.'));
+      })
+      .then(function () {
+        state.busy = false;
+        goButton.disabled = false;
+      });
+  }
+
+  // ── wiring ─────────────────────────────────────────────────
+  function setType(type) {
+    state.type = type;
+    chips.forEach(function (chip) {
+      chip.setAttribute('aria-pressed', chip.dataset.type === type ? 'true' : 'false');
+    });
+  }
+
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      setType(chip.dataset.type);
+      runSearch(1);
+    });
+  });
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    runSearch(1);
+  });
+
+  // Show something useful on first load rather than a blank page.
+  runSearch(1);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Never bake secrets or a WhatsApp session into an image.
+.env
+.env.*
+!.env.example
+auth/
+auth_state/
+
+# Rebuilt inside the image.
+node_modules/
+dist/
+
+# Local runtime state and services.
+.runtime/
+.devservices/
+data/
+logs/
+*.log
+
+# Not needed to build or run.
+.git/
+docs/
+*.md
+!README.md

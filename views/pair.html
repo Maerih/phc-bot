@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Connect WhatsApp — Public Health Colosseum</title>
+<style>
+  :root {
+    --bg:#f6f7f9; --surface:#fff; --surface-2:#f0f2f5; --line:#dfe3e8;
+    --text:#1a2027; --dim:#5b6672; --faint:#8a949e;
+    --primary:#0f6e63; --primary-ink:#fff; --primary-soft:#e3f1ef;
+    --ok:#1b7f4b; --ok-soft:#e4f3ea;
+    --warn:#8a5a00; --warn-soft:#fdf3dd;
+    --danger:#a8431a; --danger-soft:#fbeae2;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0f1419; --surface:#171d24; --surface-2:#1e252d; --line:#2b343d;
+      --text:#e6eaee; --dim:#a2adb8; --faint:#76818c;
+      --primary:#4db6a7; --primary-ink:#06120f; --primary-soft:#16302c;
+      --ok:#5fc98b; --ok-soft:#14301f;
+      --warn:#d9b05f; --warn-soft:#2e2415;
+      --danger:#e5a07c; --danger-soft:#352016;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text); min-height:100vh;
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex; align-items:flex-start; justify-content:center; padding:24px 16px 64px;
+  }
+  main{width:100%; max-width:460px}
+  header{margin-bottom:18px}
+  h1{margin:0 0 4px; font-size:1.3rem; letter-spacing:-.02em}
+  .sub{margin:0; color:var(--dim); font-size:.9rem}
+
+  .card{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius); padding:24px; text-align:center;
+  }
+  .badge{
+    display:inline-flex; align-items:center; gap:7px;
+    padding:6px 12px; border-radius:999px; font-size:.82rem; font-weight:650;
+    margin-bottom:16px;
+  }
+  .badge:before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+  .badge.ok{background:var(--ok-soft); color:var(--ok)}
+  .badge.wait{background:var(--warn-soft); color:var(--warn)}
+  .badge.off{background:var(--danger-soft); color:var(--danger)}
+
+  /* Responsive: a fixed 320px frame overflowed the card on a 375px phone. */
+  .qr-frame{
+    background:#fff; padding:14px; border-radius:12px;
+    border:1px solid var(--line);
+    width:100%; max-width:320px; aspect-ratio:1; margin:0 auto;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .qr-frame img{display:block; width:100%; height:auto; image-rendering:pixelated}
+
+  .code{
+    font:700 2rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+    letter-spacing:.22em; color:var(--primary);
+    background:var(--primary-soft); padding:18px; border-radius:12px; margin:8px 0;
+  }
+
+  .spinner{
+    width:34px;height:34px;border-radius:50%;
+    border:3px solid var(--line); border-top-color:var(--primary);
+    animation:spin .9s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){.spinner{animation:none}}
+
+  h2{margin:18px 0 8px; font-size:1.02rem}
+  .steps{margin:0; padding:0; list-style:none; text-align:left; color:var(--dim); font-size:.9rem}
+  .steps li{padding:5px 0 5px 26px; position:relative}
+  .steps li:before{
+    content:counter(s); counter-increment:s;
+    position:absolute; left:0; top:6px; width:18px; height:18px; border-radius:50%;
+    background:var(--surface-2); color:var(--text);
+    font-size:.7rem; font-weight:700; display:grid; place-items:center;
+  }
+  .steps{counter-reset:s}
+
+  .note{
+    margin-top:16px; padding:11px 13px; border-radius:10px; font-size:.84rem;
+    text-align:left; background:var(--warn-soft); color:var(--warn);
+  }
+  .meta{margin-top:14px; color:var(--faint); font-size:.78rem}
+
+  button{
+    font:inherit; cursor:pointer; border-radius:10px; padding:11px 16px;
+    border:1px solid var(--line); background:var(--surface); color:var(--text);
+  }
+  button:hover{border-color:var(--primary); color:var(--primary)}
+  button:disabled{opacity:.55; cursor:progress}
+  .danger{margin-top:18px; width:100%}
+  .danger:hover{border-color:var(--danger); color:var(--danger)}
+
+  footer{margin-top:20px; text-align:center; color:var(--faint); font-size:.76rem}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Connect WhatsApp</h1>
+    <p class="sub">Public Health Colosseum · link the bot to a WhatsApp account</p>
+  </header>
+
+  <section class="card" aria-live="polite">
+    <div id="badge" class="badge wait">Checking…</div>
+    <div id="body">
+      <div class="qr-frame"><div class="spinner" role="status"><span class="sr">Loading</span></div></div>
+    </div>
+    <div id="meta" class="meta"></div>
+    <button id="restart" class="danger" type="button">Reset session and pair again</button>
+  </section>
+
+  <footer>Powered by SCIAT SOLUTIONS</footer>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var badge = document.getElementById('badge');
+  var body = document.getElementById('body');
+  var meta = document.getElementById('meta');
+  var restart = document.getElementById('restart');
+
+  // The token is in the page URL; reuse it for the API calls.
+  var token = new URLSearchParams(location.search).get('token') || '';
+  var lastState = null;
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = String(text);
+    return n;
+  }
+  function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+
+  function setBadge(cls, text) {
+    badge.className = 'badge ' + cls;
+    badge.textContent = text;
+  }
+
+  function steps(items) {
+    var ul = el('ul', 'steps');
+    items.forEach(function (t) { ul.appendChild(el('li', null, t)); });
+    return ul;
+  }
+
+  function renderQr(data) {
+    clear(body);
+    var frame = el('div', 'qr-frame');
+    var img = document.createElement('img');
+    img.src = data.qr;              // server-generated data: URL
+    img.alt = 'WhatsApp pairing QR code';
+    frame.appendChild(img);
+    body.appendChild(frame);
+
+    body.appendChild(el('h2', null, 'Scan with WhatsApp'));
+    body.appendChild(steps([
+      'Open WhatsApp on the phone you want the bot to use',
+      'Go to Settings → Linked devices',
+      'Tap "Link a device" and scan this code'
+    ]));
+    body.appendChild(el('div', 'note',
+      'This code is a credential — anyone who scans it links the bot to their account. Do not share this page or screenshot it.'));
+  }
+
+  function renderCode(data) {
+    clear(body);
+    body.appendChild(el('div', 'code', data.code));
+    body.appendChild(el('h2', null, 'Enter this code on your phone'));
+    body.appendChild(steps([
+      'Open WhatsApp → Settings → Linked devices',
+      'Tap "Link with phone number instead"',
+      'Enter the code shown above'
+    ]));
+  }
+
+  function renderConnected(data) {
+    clear(body);
+    var frame = el('div', 'qr-frame');
+    frame.appendChild(el('div', null, '✓'));
+    frame.firstChild.style.cssText = 'font-size:4rem;color:var(--ok)';
+    body.appendChild(frame);
+    body.appendChild(el('h2', null, 'Connected'));
+    body.appendChild(el('p', 'sub',
+      data.account ? 'Linked to ' + data.account : 'The bot is linked and listening.'));
+    body.appendChild(el('div', 'note',
+      'Send .ping from WhatsApp to confirm commands are working.'));
+  }
+
+  function renderWaiting(data) {
+    clear(body);
+    var frame = el('div', 'qr-frame');
+    frame.appendChild(el('div', 'spinner'));
+    body.appendChild(frame);
+    body.appendChild(el('h2', null, 'Waiting for a code…'));
+    var why = data.reason
+      ? 'Last disconnect: ' + data.reason
+      : 'Connecting to WhatsApp. A QR code appears here within a few seconds.';
+    body.appendChild(el('p', 'sub', why));
+  }
+
+  function poll() {
+    fetch('/api/admin/pair/status?token=' + encodeURIComponent(token), {
+      headers: { accept: 'application/json' },
+      cache: 'no-store'
+    })
+      .then(function (r) {
+        if (r.status === 404) throw new Error('unauthorised');
+        return r.json();
+      })
+      .then(function (data) {
+        // Re-render only on a state change, except QR which rotates.
+        if (data.state !== lastState || data.state === 'qr') {
+          lastState = data.state;
+          if (data.state === 'connected') { setBadge('ok', 'Connected'); renderConnected(data); }
+          else if (data.state === 'qr')   { setBadge('wait', 'Waiting for scan'); renderQr(data); }
+          else if (data.state === 'code') { setBadge('wait', 'Waiting for code'); renderCode(data); }
+          else                            { setBadge('wait', 'Connecting'); renderWaiting(data); }
+        }
+        meta.textContent = data.reconnectAttempts
+          ? 'Reconnect attempts: ' + data.reconnectAttempts
+          : '';
+      })
+      .catch(function (err) {
+        setBadge('off', err.message === 'unauthorised' ? 'Invalid token' : 'Unreachable');
+        clear(body);
+        body.appendChild(el('p', 'sub',
+          err.message === 'unauthorised'
+            ? 'This link is missing a valid token.'
+            : 'Cannot reach the service. It may be restarting.'));
+      });
+  }
+
+  restart.addEventListener('click', function () {
+    if (!confirm('This deletes the stored WhatsApp session and starts pairing again. Continue?')) return;
+    restart.disabled = true;
+    restart.textContent = 'Resetting…';
+    fetch('/api/admin/pair/restart?token=' + encodeURIComponent(token), { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .catch(function () { return null; })
+      .then(function () {
+        lastState = null;
+        setTimeout(function () {
+          restart.disabled = false;
+          restart.textContent = 'Reset session and pair again';
+        }, 6000);
+      });
+  });
+
+  // QR codes rotate roughly every 20s, so poll faster than that.
+  poll();
+  setInterval(poll, 3000);
+})();
+</script>
+</body>
+</html>

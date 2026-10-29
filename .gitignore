@@ -1,0 +1,41 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# WhatsApp authentication state (contains live account credentials)
+auth/
+auth_state/
+*.session
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+# Local dev services (user-space Postgres / Redis data)
+.devservices/
+
+# Logs
+logs/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Container deployment (./ctl.sh): Docker binaries, generated secrets,
+# the WhatsApp session and backups never belong in git.
+.runtime/
+data/
+backups/
+
+# Build leftovers: the cPanel upload bundle and LaTeX intermediates
+# (the manual's PDF itself is kept).
+*.zip
+docs/*.aux
+docs/*.out
+docs/*.toc

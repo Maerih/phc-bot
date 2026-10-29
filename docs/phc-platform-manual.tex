@@ -1,0 +1,2077 @@
+% =====================================================================
+%  Public Health Colosseum --- Platform Manual
+%  Build:  pdflatex phc-platform-manual.tex   (run twice for the ToC)
+% =====================================================================
+\documentclass[11pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage[margin=2.4cm,headheight=14pt]{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{framed}
+\usepackage[hidelinks]{hyperref}
+
+% ---------------------------------------------------------------- colours
+\definecolor{phcPrimary}{HTML}{0F6E63}
+\definecolor{phcInk}{HTML}{1A2027}
+\definecolor{phcDim}{HTML}{5B6672}
+\definecolor{phcRule}{HTML}{DFE3E8}
+\definecolor{phcCodeBg}{HTML}{F6F7F9}
+\definecolor{phcWarnBg}{HTML}{FDF3DD}
+\definecolor{phcWarnInk}{HTML}{8A5A00}
+
+\hypersetup{
+  colorlinks=true, linkcolor=phcPrimary, urlcolor=phcPrimary,
+  citecolor=phcPrimary,
+  pdftitle={Public Health Colosseum --- Platform Manual},
+  pdfauthor={SCIAT SOLUTIONS},
+  pdfsubject={Installation, configuration and integration manual}
+}
+
+% ---------------------------------------------------------------- listings
+\lstdefinestyle{phc}{
+  basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{phcCodeBg},
+  frame=single,
+  rulecolor=\color{phcRule},
+  framesep=6pt,
+  xleftmargin=10pt,
+  xrightmargin=4pt,
+  breaklines=true,
+  breakatwhitespace=false,
+  postbreak=\mbox{\textcolor{phcDim}{$\hookrightarrow$}\space},
+  showstringspaces=false,
+  keepspaces=true,
+  columns=fullflexible,
+  upquote=true,
+  literate={-}{-}1 {_}{{\_}}1 {~}{{\textasciitilde}}1
+}
+\lstset{style=phc}
+\lstdefinelanguage{envfile}{
+  morecomment=[l]{\#},
+  morestring=[b]",
+  commentstyle=\color{phcDim}\itshape
+}
+
+% Inline code that tolerates underscores and other specials.
+\newcommand{\cd}[1]{\lstinline[basicstyle=\ttfamily\small]|#1|}
+
+% ---------------------------------------------------------------- headers
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\footnotesize\textcolor{phcDim}{Public Health Colosseum --- Platform Manual}}
+\fancyhead[R]{\footnotesize\textcolor{phcDim}{\thepage}}
+\fancyfoot[C]{\footnotesize\textcolor{phcDim}{Powered by SCIAT SOLUTIONS}}
+
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{phcPrimary}}
+  {\normalsize\textcolor{phcDim}{CHAPTER \thechapter}}{6pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{24pt}
+
+% ---------------------------------------------------------------- callout
+\newenvironment{callout}[1]
+  {\begin{framed}\noindent\textbf{\textcolor{phcWarnInk}{#1}}\par\vspace{3pt}\small}
+  {\end{framed}}
+
+\setlist[itemize]{itemsep=2pt,topsep=4pt,parsep=0pt}
+\setlist[enumerate]{itemsep=2pt,topsep=4pt,parsep=0pt}
+
+% Long typewriter identifiers (WHATSAPP_AUTH_DIR, X-Content-Type-Options, ...)
+% cannot be hyphenated and would otherwise overflow the margin. Letting TeX
+% stretch interword spacing on those lines keeps the right margin clean.
+\setlength{\emergencystretch}{3em}
+
+\newcommand{\dash}{---}
+
+% =====================================================================
+\begin{document}
+
+% ---------------------------------------------------------------- title
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+{\Huge\bfseries\color{phcPrimary} Public Health Colosseum\par}
+\vspace{6pt}
+{\LARGE Platform Manual\par}
+\vspace{4pt}
+{\large\itshape Release 1.0 \dash{} ``Neo''\par}
+\vspace{1.2cm}
+{\large An AI-ready opportunity and community intelligence platform\par}
+{\large for public-health students, professionals and researchers\par}
+\vspace{2.5cm}
+\begin{tabular}{rl}
+\textbf{Release} & 1.0.0 \dash{} ``Neo'' \\
+\textbf{Status} & Production-ready \\
+\textbf{Date} & 4 October 2026 (revised 29 October 2026) \\
+\textbf{Surfaces} & WhatsApp, Web \\
+\end{tabular}
+\vfill
+{\large\bfseries Powered by SCIAT SOLUTIONS\par}
+\vspace{1cm}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% =====================================================================
+\chapter{Introduction}
+
+\section{What this platform is}
+
+The Public Health Colosseum is a global community where students, early
+professionals, researchers and practitioners learn, connect and unlock
+opportunities in public health. This platform is the infrastructure behind it.
+
+It discovers opportunities from multiple independent sources, normalises them
+into a single trustworthy shape, removes duplicates, hides anything past its
+deadline, ranks what remains, and delivers the result through two surfaces:
+
+\begin{itemize}
+  \item \textbf{WhatsApp} \dash{} 34 commands for members already in the community.
+  \item \textbf{Web} \dash{} a public search page requiring no account, no login
+        and no app.
+\end{itemize}
+
+Both surfaces call the same search engine, so an improvement to ranking or
+de-duplication reaches both at once.
+
+The platform covers fourteen opportunity types, including jobs, internships,
+scholarships, fellowships, research posts, grants, conferences, training and
+events.
+
+\section{What it deliberately does not do}
+
+Stating this plainly is part of the product. A member deciding whether to spend
+a week on an application deserves to know what the system is actually claiming.
+
+\begin{itemize}
+  \item \textbf{It does not assert that listings are genuine.} Opportunities
+        are gathered from third-party sources. Unless a record is explicitly
+        marked verified, it has not been independently checked. Every rendered
+        result says so and links to the official page.
+  \item \textbf{It does not invent missing information.} A field a source did
+        not state is stored as null and rendered as ``not stated''. An unknown
+        deadline is never shown as ``no deadline'', because those are different
+        facts.
+  \item \textbf{It does not scrape sites that prohibit it.} See
+        Section~\ref{sec:linkedin}.
+  \item \textbf{It does not ban or block members automatically.} Moderation is
+        designed as \emph{AI recommendation $\rightarrow$ risk score $\rightarrow$
+        administrator review}.
+\end{itemize}
+
+\section{Current status}
+
+Release 1.0 ``Neo'' is complete, verified and in use. It covers opportunity
+discovery across six sources, two delivery surfaces, group administration, an
+AI assistant and a live web-search fallback. Later phases are specified in
+Chapter~\ref{ch:roadmap} but not built.
+
+This manual documents only what exists today. Anything unverified is labelled
+as such \dash{} there are two such caveats, and both say so plainly where they
+appear.
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Measure} & \textbf{Value} \\
+\midrule
+Source files (TypeScript, excluding tests) & 64 \\
+Lines of source & 8{,}432 \\
+Unit tests & 133, all passing \\
+Typecheck & Clean (\texttt{tsc -{}-noEmit}) \\
+Build & Clean \\
+Commands & 34 (63 names including aliases) \\
+Opportunity sources & 6 registered, 5 active \\
+AI providers & Gemini (default), Anthropic; OpenAI planned \\
+Web-search backends & Tavily, self-hosted SearXNG, provider grounding \\
+Database tables & 8 tables, 9 enumerated types \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =====================================================================
+\chapter{Architecture}
+
+\section{Overview}
+
+\begin{lstlisting}
+   WhatsApp (Baileys, own number)        Web browser (no account needed)
+              |                                        |
+   +----------v----------+              +--------------v--------------+
+   |   Command router    |              |  public/index.html          |
+   |  prefix . auth .    |              |  GET /api/search            |
+   |  rate limit .       |              |  per-IP rate limited        |
+   |  session            |              +--------------+--------------+
+   +----------+----------+                             |
+              |                                        |
+   +----------v----------+                             |
+   |  Command registry   |  one file per command       |
+   +----------+----------+                             |
+              |                                        |
+              +----------------+-----------------------+
+                               |
+                    +----------v----------+
+                    |   Search service    |  transport-agnostic
+                    +----------+----------+
+                               |
+   +---------------+-----------+-----------+---------------+
+   v               v           v           v               v
+ Query          Source      Filter      Dedupe           Rank
+ parser         fan-out                 (2-pass)      (weighted)
+                   |
+   +-----------+---+-------+-----------+-----------+
+   v           v           v           v           v
+ Greenhouse  Remotive    Jobicy     RemoteOK   Arbeitnow   (+ ReliefWeb,
+ (employer   (remote)    (remote)   (remote)   (breadth)      disabled)
+  boards)
+   |           |           |           |           |
+   +-----------+-----+-----+-----------+-----------+
+                     |
+           +---------v---------+
+           |   Normalisation   |  one canonical shape
+           |  + classification |  unknown stays unknown
+           +---------+---------+
+                     |
+          zero results? --yes--> +------------------------+
+                     |           |  Web-search fallback   |
+                     no          |  Tavily / SearXNG      |
+                     |           |  -> model extracts     |
+                     |           |  -> marked AI_ASSISTED |
+                     |           +-----------+------------+
+                     |                       |
+           +---------v-----------------------v---------+
+           |              PostgreSQL                   |
+           |  opportunities . members . sources        |
+           |  subscriptions . saved . warnings . log   |
+           +-------------------------------------------+
+\end{lstlisting}
+
+\section{Design principles}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Principle} & \textbf{How it is enforced} \\
+\midrule
+Provider independence & No business logic imports a vendor SDK. AI sits behind
+an interface selected by configuration. \\
+Source independence & No code names a specific job board outside its own
+connector file. Adding a source touches two files. \\
+Transport independence & The search service takes a query and returns scored
+results. It has no knowledge of WhatsApp or HTTP. \\
+Unknown stays unknown & Unstated fields are null and render as ``not stated''. \\
+Graceful degradation & A failing source, missing AI key or thrown handler
+degrades one thing, and the user is told. \\
+Honest verification & Nothing is presented as verified because it appeared in a
+feed. \\
+Minimal personal data & A member record is a WhatsApp JID plus whatever the
+member chose to share. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Request lifecycle}
+
+\begin{lstlisting}
+inbound message
+  |
+  +- parseInvocation    prefix check; ordinary conversation ignored
+  +- touchMember        upsert by JID, refresh lastSeenAt, re-sync admin flag
+  +- isBlocked?         drop
+  +- adminOnly?         check ADMIN_NUMBERS -> non-admins get "unknown command"
+  +- rate limit         persisted token bucket, unless exempt
+  |
+  +- handler
+       +- parseQuery    filters extracted, consumed, removed from free text
+       +- react         immediate feedback before the slow part
+       +- fanOut        connectors in parallel, each isolated and timed out
+       +- applyFilters  hard requirements (type, country, remote, recency)
+       +- dedupe        fingerprint pass, then same-org near-duplicate pass
+       +- rank          weighted score plus relevance quality gate
+       +- setSession    remembered for .next / .prev / .details
+       +- reply         rendered page, attribution, degradation warning
+       +- logCommand    command name and normalised terms only
+\end{lstlisting}
+
+Persistence is deliberately off this path. Discovered opportunities are written
+in the background and tracked, so shutdown waits for those writes rather than
+aborting them.
+
+\section{Project layout}
+
+\begin{lstlisting}
+src/
+  index.ts              entry point, startup order, graceful shutdown
+  cli/search.ts         terminal search harness
+  config/env.ts         validated environment; the only reader of process.env
+  core/                 logger (JID redaction), TTL cache, text utilities
+  domain/               Opportunity model, classification, normalisation
+  db/                   Drizzle schema, client, repositories
+  sources/              connector contract, registry/fan-out, connectors
+  search/               query parser, filters, dedupe, ranking, service
+  commands/             contract, registry, router, one file per command
+  whatsapp/             Baileys client, message rendering
+  http/                 health, status, search API, rate limiting
+public/
+  index.html            the web search interface (single file, no build step)
+scripts/
+  dev-services.sh       rootless local PostgreSQL and Redis
+docs/                   architecture, roadmap, legacy analysis, this manual
+\end{lstlisting}
+
+% =====================================================================
+\chapter{Requirements}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Requirement} & \textbf{Version} & \textbf{Purpose} \\
+\midrule
+Node.js & $\geq$ 20 (tested 22.22.2) & Runtime \\
+npm & $\geq$ 9 (tested 11.19.0) & Package management \\
+PostgreSQL & $\geq$ 14 (tested 18.6) & Primary datastore \\
+A spare WhatsApp number & \dash{} & The bot links its own device \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Not required for Phase 1:
+
+\begin{itemize}
+  \item \textbf{Redis} \dash{} used from Phase 2 for queues. The development
+        script starts one if installed, and the platform runs without it.
+  \item \textbf{An AI API key} \dash{} the platform runs fully without one.
+  \item \textbf{Docker} \dash{} not used. Local services run rootless.
+\end{itemize}
+
+\begin{callout}{Use a dedicated WhatsApp number}
+Two bots on one number fight over the session and disconnect each other
+repeatedly. Give this platform a number of its own.
+\end{callout}
+
+% =====================================================================
+\chapter{Installation}
+
+\section{Obtain and install}
+
+\begin{lstlisting}[language=bash]
+git clone <your-repository-url> phc-platform
+cd phc-platform
+npm install
+\end{lstlisting}
+
+\texttt{npm install} pulls roughly 240 packages, most of them the Baileys
+dependency tree. Several minutes is normal.
+
+\begin{callout}{Skipped install scripts are expected}
+npm may report that install scripts were not run for Baileys, protobufjs and
+esbuild. This is harmless \dash{} the platform, its tests and its build all work
+correctly without them.
+\end{callout}
+
+\section{Verify the toolchain}
+
+\begin{lstlisting}[language=bash]
+npm run typecheck    # tsc --noEmit
+npm test             # vitest run (75 tests)
+npm run build        # tsc -> dist/
+\end{lstlisting}
+
+All three should complete without output other than their own banner. The 75
+unit tests cover pure logic and require neither a database nor a network, so
+they pass on a machine with nothing else set up.
+
+% =====================================================================
+\chapter{Configuration}
+\label{ch:config}
+
+\section{Where configuration lives}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{File} & \textbf{Role} \\
+\midrule
+\texttt{.env} & Your real configuration. Git-ignored, never committed. This is
+the file you edit. \\
+\texttt{.env.example} & The committed template documenting every variable.
+Copy it when setting up a new machine. \\
+\texttt{src/config/env.ts} & The code defining and validating the variables.
+The only place in the codebase that reads \texttt{process.env}. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{lstlisting}[language=bash]
+cp .env.example .env
+\end{lstlisting}
+
+\section{Validation behaviour}
+
+Configuration is parsed and validated \emph{once, at startup}, and then frozen.
+Two consequences matter in practice:
+
+\begin{enumerate}
+  \item A malformed value stops the process immediately with a message naming
+        the offending variable. You find out when you start the service, not
+        when a member sends a command that happens to use it.
+  \item Changing \texttt{.env} requires a restart. \texttt{npm run dev} reloads
+        on source changes but not on configuration changes.
+\end{enumerate}
+
+\section{Complete variable reference}
+
+\subsection*{Required}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Variable} & \textbf{Description} \\
+\midrule
+\texttt{DATABASE\_URL} & PostgreSQL connection string. Must be a valid URL.
+Example: \texttt{postgres://127.0.0.1:55432/phc} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{Runtime}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Variable} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\texttt{NODE\_ENV} & \texttt{development} & \texttt{development}, \texttt{test}
+or \texttt{production}. Development enables human-readable logs. \\
+\texttt{PORT} & \texttt{3100} & HTTP port for the web interface and API. \\
+\texttt{LOG\_LEVEL} & \texttt{info} & \texttt{trace} through \texttt{fatal}. \\
+\texttt{TIMEZONE} & \texttt{Africa/Nairobi} & Display timezone. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{WhatsApp}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Variable} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\texttt{WHATSAPP\_PROVIDER} & \texttt{baileys} & Only \texttt{baileys} is
+implemented. \\
+\texttt{WHATSAPP\_AUTH\_DIR} & \texttt{./auth} & Where session credentials are
+stored. Git-ignored. \textbf{Treat as a secret.} \\
+\texttt{WHATSAPP\_PAIR\_NUMBER} & empty & Digits only, no \texttt{+}. Set to
+pair by code; leave blank for a QR code. \\
+\texttt{COMMAND\_PREFIX} & \texttt{.} & Command prefix, 1 to 3 characters. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{Administration}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Variable} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\texttt{ADMIN\_NUMBERS} & empty & Comma-separated phone numbers, digits only,
+no \texttt{+}. Validated at startup. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{Opportunity sources}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Variable} & \textbf{Description} \\
+\midrule
+\texttt{SOURCES\_ENABLED} & Comma-separated connector slugs. Available:
+\texttt{greenhouse}, \texttt{remotive}, \texttt{jobicy}, \texttt{remoteok},
+\texttt{arbeitnow}, \texttt{reliefweb}. \newline
+Default: \texttt{greenhouse,remotive,arbeitnow,jobicy,remoteok} \\
+\addlinespace[3pt]
+\texttt{GREENHOUSE\_BOARDS} & Employer board tokens, one per organisation.
+\newline
+Default: the four verified organisations \\
+\addlinespace[3pt]
+\texttt{RELIEFWEB\_APPNAME} & Free registered appname. Blank (the default)
+keeps ReliefWeb disabled. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{AI providers (optional)}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Variable} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\texttt{AI\_PROVIDER} & \texttt{gemini} & \texttt{gemini}, \texttt{anthropic},
+\texttt{openai} or \texttt{none}. \\
+\texttt{GEMINI\_API\_KEY} & empty & \textbf{Free} key from Google AI Studio. \\
+\texttt{GEMINI\_MODEL} & \texttt{gemini-3.8-flash} & Model identifier. \\
+\texttt{ANTHROPIC\_API\_KEY} & empty & Paid. From the Anthropic Console. \\
+\texttt{ANTHROPIC\_MODEL} & \texttt{claude-opus-5} & Model identifier. \\
+\texttt{OPENAI\_API\_KEY} & empty & Provider not implemented. \\
+\texttt{OPENAI\_MODEL} & \texttt{gpt-4o-mini} & Model identifier. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{Web search (optional)}
+
+Powers the opportunity fallback. See Chapter~\ref{ch:websearch}.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Variable} & \textbf{Default} & \textbf{Description} \\
+\midrule
+\texttt{WEB\_SEARCH\_PROVIDER} & \texttt{none} & \texttt{tavily},
+\texttt{searxng}, \texttt{provider} or \texttt{none}. \\
+\texttt{TAVILY\_API\_KEY} & empty & Free-tier key from
+\url{https://app.tavily.com/}. \\
+\texttt{SEARXNG\_URL} & empty & Base URL of a SearXNG instance you host. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{A complete example}
+
+% Kept in a minipage so the example is never split across a page boundary.
+\noindent\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=envfile]
+NODE_ENV=development
+PORT=3100
+LOG_LEVEL=info
+TIMEZONE=Africa/Nairobi
+DATABASE_URL=postgres://127.0.0.1:55432/phc
+WHATSAPP_PROVIDER=baileys
+WHATSAPP_AUTH_DIR=./auth
+WHATSAPP_PAIR_NUMBER=
+COMMAND_PREFIX=.
+ADMIN_NUMBERS=254700000000
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your-free-key
+GEMINI_MODEL=gemini-3.8-flash
+WEB_SEARCH_PROVIDER=tavily
+TAVILY_API_KEY=tvly-...
+SEARXNG_URL=
+SOURCES_ENABLED=greenhouse,remotive,arbeitnow,jobicy,remoteok
+GREENHOUSE_BOARDS=oneacrefund,resolvetosavelives,dimagi,givedirectly
+RELIEFWEB_APPNAME=
+\end{lstlisting}
+\end{minipage}
+
+% =====================================================================
+\chapter{Database}
+
+\section{Option A: rootless local server}
+
+The bundled script creates a PostgreSQL cluster owned by your user, on a
+non-default port, inside the project directory. It requires no \texttt{sudo}
+and never touches a system-wide installation.
+
+\begin{lstlisting}[language=bash]
+./scripts/dev-services.sh start     # start, create the database
+./scripts/dev-services.sh status
+./scripts/dev-services.sh stop
+./scripts/dev-services.sh destroy   # stop and delete all local data
+\end{lstlisting}
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Service} & \textbf{Port} & \textbf{Data directory} \\
+\midrule
+PostgreSQL & 55432 & \texttt{.devservices/postgres} \\
+Redis (if installed) & 56379 & \texttt{.devservices} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Option B: your own PostgreSQL}
+
+Point \texttt{DATABASE\_URL} at it. No other change is needed.
+
+\begin{callout}{Prefer 127.0.0.1 over localhost}
+\texttt{localhost} can resolve to IPv6 \texttt{::1}, which the development
+cluster does not bind. If a connection fails with \texttt{localhost}, use
+\texttt{127.0.0.1}.
+\end{callout}
+
+\section{Creating the schema}
+
+\begin{lstlisting}[language=bash]
+npm run db:push        # apply the schema directly (development)
+\end{lstlisting}
+
+For production, use versioned migrations:
+
+\begin{lstlisting}[language=bash]
+npm run db:generate    # write SQL migrations to ./drizzle
+npm run db:migrate     # apply them
+npm run db:studio      # browse the data
+\end{lstlisting}
+
+\section{Schema}
+
+Eight tables and nine enumerated types.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Table} & \textbf{Purpose} \\
+\midrule
+\texttt{opportunities} & Every opportunity, of all fourteen types. One table,
+not fourteen. \\
+\texttt{sources} & One row per connector: enablement, trust score, fetch
+interval, attribution obligation, health. \\
+\texttt{members} & WhatsApp JID plus the profile a member chose to provide. \\
+\texttt{subscriptions} & A member's interest in a topic. \\
+\texttt{saved\_opportunities} & Opportunities a member kept. \\
+\texttt{command\_log} & Command usage for analytics. Never stores raw message
+text. \\
+\texttt{group\_settings} & Per-group moderation configuration, created lazily on
+first change. \\
+\texttt{warnings} & Append-only moderation log, so a removal can be justified. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Enum} & \textbf{Values} \\
+\midrule
+\texttt{opportunity\_type} & JOB, INTERNSHIP, SCHOLARSHIP, FELLOWSHIP,
+RESEARCH, GRANT, CONFERENCE, TRAINING, HACKATHON, VOLUNTEER, PROJECT,
+MENTORSHIP, EVENT, PROGRAM \\
+\texttt{opportunity\_status} & DISCOVERED, PENDING\_REVIEW, VERIFIED,
+PUBLISHED, EXPIRED, REJECTED \\
+\texttt{verification\_status} & UNVERIFIED, SOURCE\_VERIFIED, AI\_ASSISTED,
+ADMIN\_VERIFIED, EXPIRED, FLAGGED \\
+\texttt{experience\_level} & UNKNOWN, ENTRY, GRADUATE, MID, SENIOR, EXECUTIVE \\
+\texttt{education\_level} & UNKNOWN, SECONDARY, CERTIFICATE, DIPLOMA,
+BACHELORS, MASTERS, DOCTORATE \\
+\texttt{category} & 20 subject categories, from PUBLIC\_HEALTH and
+EPIDEMIOLOGY through to CYBERSECURITY and OTHER \\
+\texttt{notify\_mode} & IMMEDIATE, DAILY, WEEKLY, OFF \\
+\texttt{source\_kind} & API, RSS, SCRAPE, MANUAL \\
+\texttt{moderation\_action} & OFF, WARN, DELETE, REMOVE \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{callout}{Schema and domain must agree}
+\texttt{drizzle-kit} bundles the schema as CommonJS and cannot resolve a
+\texttt{.js} specifier onto a \texttt{.ts} source. The schema therefore declares
+its enum values directly and imports only \emph{types} from the domain, guarded
+by a compile-time equality assertion. Add a value to the domain without adding
+it to the schema and \texttt{npm run typecheck} fails \dash{} by design.
+\end{callout}
+
+% =====================================================================
+\chapter{Running the platform}
+
+\section{Commands}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Command} & \textbf{Purpose} \\
+\midrule
+\texttt{npm run dev} & Development: watch mode, human-readable logs. \\
+\texttt{npm run build} & Compile TypeScript to \texttt{dist/}. \\
+\texttt{npm start} & Production: run the compiled output. \\
+\texttt{npm run typecheck} & Type check without emitting. \\
+\texttt{npm test} & Run the 133 unit tests. \\
+\texttt{npm run check} & Typecheck and test together. \\
+\texttt{npm run search} & Search from the terminal (see below). \\
+\texttt{npm run ai:check} & Verify the AI provider, key and model really work. \\
+\texttt{npm run db:push} & Apply the schema. \\
+\texttt{npm run db:generate} & Generate migrations. \\
+\texttt{npm run db:migrate} & Apply migrations. \\
+\texttt{npm run db:studio} & Browse the database. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Startup order}
+
+Configuration, then database, then HTTP, then WhatsApp. The order is
+deliberate: connecting to WhatsApp before the database is reachable would leave
+members talking to a bot that cannot answer. Shutdown reverses the order and
+flushes pending background writes before closing the connection pool.
+
+\section{Searching from the terminal}
+
+The fastest way to exercise sources, normalisation, de-duplication and ranking
+without a WhatsApp connection:
+
+\begin{lstlisting}[language=bash]
+npm run search -- public health
+npm run search -- nairobi internship
+npm run search -- --json epidemiology      # machine-readable, scores included
+npm run search -- --no-persist remote      # skip database writes
+\end{lstlisting}
+
+It prints the per-source breakdown and the exact message a member would
+receive. In \texttt{-{}-json} mode stdout carries only JSON, so it pipes
+cleanly; logs go to stderr.
+
+% =====================================================================
+\chapter{Integration: WhatsApp}
+
+\section{Ownership model}
+
+The platform owns its own WhatsApp number and its own session. Authentication
+state is written to \texttt{WHATSAPP\_AUTH\_DIR} on your machine and never
+leaves it. No third-party pairing website is involved, and no session string is
+pasted into an environment variable.
+
+\section{Pairing with a QR code}
+
+\begin{enumerate}
+  \item Leave \texttt{WHATSAPP\_PAIR\_NUMBER} blank.
+  \item Run \texttt{npm run dev}.
+  \item A QR code is printed in the terminal.
+  \item On the phone: \textbf{WhatsApp $\rightarrow$ Settings $\rightarrow$
+        Linked devices $\rightarrow$ Link a device}, then scan.
+\end{enumerate}
+
+QR codes rotate roughly every twenty seconds; a fresh one is printed
+automatically.
+
+On a server run with \texttt{./ctl.sh} (see \texttt{docs/DEPLOY-VPS.md}),
+\texttt{./ctl.sh pair} draws the same QR code in the terminal and closes by
+itself once the phone has linked. The QR is never shown on a web page unless
+\texttt{PAIRING\_PAGE=on} is set, which is meant only for shared hosting with
+no terminal.
+
+\section{Pairing with an eight-character code}
+
+\begin{enumerate}
+  \item Set \texttt{WHATSAPP\_PAIR\_NUMBER} to the number in international
+        format, digits only, no \texttt{+}.
+  \item Run \texttt{npm run dev}.
+  \item The code is logged after a few seconds.
+  \item On the phone: \textbf{Linked devices $\rightarrow$ Link with phone
+        number instead}, then enter it.
+\end{enumerate}
+
+\section{Confirming the connection}
+
+\begin{lstlisting}[language=bash]
+curl -s http://127.0.0.1:3100/health
+# {"status":"ok","whatsapp":"connected","uptimeSeconds":12}
+\end{lstlisting}
+
+Session credentials persist across restarts. To unlink, stop the process,
+delete \texttt{WHATSAPP\allowbreak\_AUTH\allowbreak\_DIR}, and pair again.
+
+\section{Who can use the bot}
+
+\textbf{Any number, including the bot's own.} Every command is open to every
+sender; only commands marked \texttt{adminOnly} check \texttt{ADMIN\_NUMBERS},
+and group commands check that chat's own admin list.
+
+That includes the number the bot is paired to. If it is paired to the
+operator's phone, the operator can drive it from that phone. Earlier builds
+discarded \texttt{fromMe} messages, so the bot connected normally and then
+silently ignored its own owner; it now processes them, with a loop guard that
+remembers sent message identifiers so an echo of a reply is never re-handled as
+input.
+
+Members on newer LID-based WhatsApp accounts are identified by the
+phone-number JID that WhatsApp supplies alongside the LID
+(\texttt{participantPn} / \texttt{senderPn}). Without that, such a member's
+identity could never match \texttt{ADMIN\_NUMBERS}, and administrators on those
+accounts would find admin commands silently failing.
+
+\section{Reconnection and automatic re-pairing}
+
+Ordinary disconnections are retried with exponential backoff, capped at sixty
+seconds.
+
+A \emph{logged out} session is handled differently. Those credentials are
+already dead \dash{} WhatsApp has invalidated them and nothing can revive them
+\dash{} so the platform deletes them and starts pairing again by itself. A
+fresh QR code, or a pairing code when \texttt{WHATSAPP\_PAIR\_NUMBER} is set,
+appears in the logs.
+
+Re-pairing is capped at three attempts per hour. Beyond that the platform stops
+and says so, rather than spinning indefinitely generating pairing requests
+against WhatsApp. A successful connection resets the counter.
+
+\begin{callout}{Why deleting the credentials is safe}
+It only happens on an explicit logout, where the stored session can no longer
+authenticate anything. Retaining it would make every subsequent reconnect fail
+in exactly the same way, leaving the bot dark until a human noticed.
+\end{callout}
+
+% =====================================================================
+\chapter{Integration: the web interface}
+
+\section{Using it}
+
+Start the platform and open \texttt{http://localhost:3100}. No account, no
+login, no WhatsApp. A student can find an opportunity without joining anything
+first.
+
+The interface is a single static file with no build step. It is mobile-first,
+supports light and dark themes, and renders all text through
+\texttt{textContent} rather than \texttt{innerHTML}, because titles and
+organisation names come from third-party feeds.
+
+\section{HTTP endpoints}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Route} & \textbf{Purpose} \\
+\midrule
+\texttt{GET /} & The search interface. \\
+\texttt{GET /api/search} & Search. Parameters: \texttt{q}, \texttt{location},
+\texttt{type}, \texttt{remote}, \texttt{page}, \texttt{pageSize}. \\
+\texttt{GET /api/sources} & Which sources are active. \\
+\texttt{GET /api/filters} & Opportunity types, for the filter controls. \\
+\texttt{GET /health} & Liveness probe. 200 when WhatsApp is connected,
+503 otherwise. \\
+\texttt{GET /api/status} & Operational status. Contains no personal data. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Example}
+
+\begin{lstlisting}[language=bash]
+curl -s "http://127.0.0.1:3100/api/search?q=public+health&pageSize=4"
+\end{lstlisting}
+
+\begin{lstlisting}
+{
+  "results": [
+    {
+      "title": "Technical Advisor, Surveillance, Data Use and Decision Science",
+      "organization": "Resolve To Save Lives",
+      "summary": "...",
+      "type": "JOB",
+      "typeLabel": "Job",
+      "categories": ["Epidemiology", "Global Health", "Health Informatics"],
+      "location": "Kinshasa, DRC",
+      "country": "CD",
+      "remote": null,
+      "deadline": null,
+      "daysLeft": null,
+      "applicationUrl": "https://job-boards.greenhouse.io/...",
+      "sourceName": "Employer career boards",
+      "verified": false,
+      "score": 63.6
+    }
+  ],
+  "total": 4,
+  "page": 1,
+  "pageSize": 4,
+  "hasMore": false,
+  "degraded": false,
+  "unavailableSources": [],
+  "attributions": [],
+  "durationMs": 3768,
+  "interpreted": { "terms": "public health", "type": null, "location": null }
+}
+\end{lstlisting}
+
+The \texttt{interpreted} block reports how the query was parsed, and
+\texttt{degraded} together with \texttt{unavailableSources} lets a client state
+that results may be incomplete rather than implying that nothing exists.
+
+\section{Rate limiting}
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Endpoint group} & \textbf{Limit} & \textbf{Window} \\
+\midrule
+\texttt{/api/search} & 30 requests & 5 minutes per IP \\
+\texttt{/api/sources}, \texttt{/api/filters} & 120 requests & 5 minutes per IP \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is not arbitrary caution. Every search fans out to upstreams whose terms
+cap how often they may be polled; an unlimited public endpoint would exhaust a
+shared quota and risk the platform's access for every user. Exceeding the limit
+returns HTTP 429 with a \texttt{retry-after} header.
+
+\section{Security headers}
+
+Every response carries \texttt{X-Content-Type-Options: nosniff},
+\texttt{X-Frame-Options: DENY}, \texttt{Referrer-Policy: no-referrer} and a
+restrictive Content Security Policy with no third-party script or style
+origins. Outbound application links use \texttt{rel="noopener noreferrer"}.
+
+% =====================================================================
+\chapter{Integration: opportunity sources}
+\label{ch:sources}
+
+\section{How sources work}
+
+Each connector is independently enabled, isolated behind its own twelve-second
+timeout, rate-limited to its upstream's stated policy, and cached. One failing
+source degrades that source alone, and the user is told the list may be
+incomplete.
+
+The result cache's time-to-live \emph{is} the connector's minimum fetch
+interval, so a polite source is polled politely without any caller having to
+remember to.
+
+\section{Registered sources}
+
+Six connectors, five active by default.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llccX@{}}
+\toprule
+\textbf{Source} & \textbf{Slug} & \textbf{Trust} & \textbf{Interval} &
+\textbf{Notes} \\
+\midrule
+Employer career boards & \texttt{greenhouse} & 85 & 3\,h & First-party
+postings straight from the employer. Keyless. Organisations are configured,
+not hard-coded. \\
+Remotive & \texttt{remotive} & 60 & 6\,h & Remote roles. Attribution and
+link-back required by their terms. \\
+Jobicy & \texttt{jobicy} & 45 & 3\,h & Remote board with an industry filter.
+Keyless. \\
+RemoteOK & \texttt{remoteok} & 45 & 6\,h & Remote board. Keyless. Attribution
+required. \\
+Arbeitnow & \texttt{arbeitnow} & 40 & 3\,h & Keyless breadth. Heavily
+German/European, no server-side search. \\
+ReliefWeb & \texttt{reliefweb} & 90 & 2\,h & UN, NGO and humanitarian
+vacancies. \textbf{Disabled} pending an approved appname. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{callout}{An ambitious fetch that never finishes is worth nothing}
+Arbeitnow originally pulled two pages of several megabytes each and blew the
+twelve-second connector timeout on \emph{every} search, contributing nothing
+for the entire time it was enabled. It now fetches one page and returns
+reliably in about six seconds. For a low-trust breadth source that is the
+right trade \dash{} and the general lesson is that a source which times out is
+worse than a smaller one that succeeds, because it also costs the member the
+wait.
+\end{callout}
+
+\section{Employer career boards (recommended)}
+
+This is the highest-signal source available, and it works differently from an
+aggregator: instead of one upstream returning everything, you name the
+organisations you care about and the platform reads their own career boards.
+Postings are authoritative, carry real application deadlines where the employer
+set one, use the employer's own department labels as a classification signal,
+and link directly to the employer's site.
+
+Four organisations are verified and enabled by default:
+\texttt{oneacrefund}, \texttt{resolvetosavelives}, \texttt{dimagi},
+\texttt{givedirectly}.
+
+To check whether another organisation publishes a public board:
+
+\begin{lstlisting}[language=bash]
+curl -s "https://boards-api.greenhouse.io/v1/boards/<token>/jobs" | head -c 200
+\end{lstlisting}
+
+A 200 response containing a \texttt{jobs} array means it works. Add the token
+to \texttt{GREENHOUSE\_BOARDS} and restart. The token is usually the
+organisation's name in lower case. A board that is renamed or withdrawn is
+logged and skipped; the other organisations are unaffected.
+
+\begin{callout}{The cheapest way to improve results}
+Every health employer you add is authoritative, keyless, and ranks above the
+aggregators. This has a larger effect on result quality than any other change
+available to an administrator.
+\end{callout}
+
+\section{Enabling ReliefWeb}
+
+ReliefWeb is where WHO, UNICEF, UNFPA, MSF, IRC and national health ministries
+post, with real closing dates. It is the single highest-value source for this
+community.
+
+Since 1 November 2025 the appname must be \textbf{pre-approved}; one cannot
+simply be invented.
+
+\begin{enumerate}
+  \item Complete the request form linked from
+        \url{https://apidoc.reliefweb.int/parameters\#appname}
+  \item Choose a name in their required form: organisation + purpose + random
+        characters, for example \texttt{phc-colosseum-opportunities-7f3a}
+  \item Wait for ReliefWeb's email \dash{} requests are reviewed by a person.
+  \item Set \texttt{RELIEFWEB\_APPNAME} and add \texttt{reliefweb} to
+        \texttt{SOURCES\_ENABLED}.
+\end{enumerate}
+
+\begin{callout}{This connector is unverified}
+The ReliefWeb connector follows the published v2 API documentation but has
+\textbf{not} been exercised against the live endpoint, because the project has
+no approved appname. ReliefWeb decommissioned v1, and v2 returns HTTP 403 to
+unregistered callers. Treat its field mapping as unverified until your first
+successful synchronisation, and check \texttt{.sources} and the logs
+afterwards.
+\end{callout}
+
+\section{On LinkedIn and similar platforms}
+\label{sec:linkedin}
+
+LinkedIn has no public jobs-search API. Its Talent Solutions partner APIs are
+for \emph{posting} jobs, are gated behind partner approval, and do not expose
+job search. Its User Agreement prohibits scraping, and that prohibition is
+enforced: \emph{hiQ Labs v.\ LinkedIn} ran for six years and ended with
+LinkedIn prevailing on breach of contract in 2022; hiQ ceased operations.
+Scraping also attracts IP blocking and, when performed with an account, account
+termination.
+
+The platform therefore contains no LinkedIn scraper, and adding one is not
+recommended.
+
+Legitimate routes to overlapping coverage:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Provider} & \textbf{Notes} \\
+\midrule
+JSearch (RapidAPI) & Resells the Google for Jobs index, which includes LinkedIn
+postings. Documented API, free tier, dependable terms. \\
+Adzuna & Free API, around twenty countries. \\
+Jooble & Free API key. \\
+Careerjet & Free affiliate identifier. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Each is a connector of roughly one hundred lines. If you obtain genuine
+LinkedIn partner access, the connector architecture accepts it like any other
+source.
+
+\section{Adding a source}
+
+Create a file under \texttt{src/sources/<kind>/} exporting a
+\texttt{SourceConnector}:
+
+\begin{lstlisting}[language=Java]
+import type { ConnectorMeta, FetchContext, SourceConnector } from '../types.js';
+import { buildUrl, getJson } from '../common/http.js';
+
+const meta: ConnectorMeta = {
+  slug: 'who-careers',
+  name: 'WHO Careers',
+  kind: 'API',
+  homepageUrl: 'https://careers.who.int',
+  supplies: ['JOB', 'INTERNSHIP', 'FELLOWSHIP'],
+  minFetchIntervalMinutes: 120,  // honour the upstream's stated limit
+  trustScore: 95,                // first-party postings rank higher
+  attributionRequired: false,
+  unavailableReason: null,       // or a string when a key is missing
+};
+
+export const whoConnector: SourceConnector = {
+  meta,
+  async fetch({ query, signal, log }: FetchContext) {
+    const payload = await getJson<Response>(
+      buildUrl(ENDPOINT, { q: query.terms }), { signal },
+    );
+    return payload.items.map((item) => ({ title: item.title /* ... */ }));
+  },
+};
+\end{lstlisting}
+
+Then register it in \texttt{ALL\_CONNECTORS} in
+\texttt{src/sources/registry.ts} and add the slug to
+\texttt{SOURCES\_ENABLED}.
+
+A connector returns raw records and maps only what its upstream actually said.
+It never classifies, de-duplicates or formats \dash{} normalisation does that
+identically for every source. Always use \texttt{getJson} rather than
+\texttt{fetch} directly, so the connector inherits timeouts, retry policy, the
+response-size ceiling and the identifying user agent.
+
+Set \texttt{unavailableReason} when a key or registration is missing: the
+connector then stays registered and explains itself instead of being silently
+absent.
+
+% =====================================================================
+\chapter{Integration: AI providers}
+\label{ch:ai}
+
+\section{What AI is used for}
+
+Two features depend on a model:
+
+\begin{itemize}
+  \item \texttt{.ask} \dash{} general public-health question answering.
+  \item The \textbf{opportunity web fallback} \dash{} when every configured
+        source returns nothing, the platform searches the live web and extracts
+        real opportunities from the results (Chapter~\ref{ch:websearch}).
+\end{itemize}
+
+Everything else \dash{} search, filtering, classification, de-duplication,
+ranking, group administration \dash{} works with no provider at all.
+Rule-based classification is the permanent floor, not a placeholder, so a
+missing, failing or unbilled provider never degrades the platform.
+
+\section{Gemini \dash{} the default}
+
+Google AI Studio issues a \textbf{free} API key with a usable free tier. That
+is why it is the default: the assistant and the fallback both work without a
+billing account.
+
+\begin{lstlisting}[language=envfile]
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your-key-here
+GEMINI_MODEL=gemini-3.8-flash
+\end{lstlisting}
+
+Get a key at \url{https://aistudio.google.com/apikey}, then verify it:
+
+\begin{lstlisting}[language=bash]
+npm run ai:check
+\end{lstlisting}
+
+\begin{callout}{Always run ai:check after changing a key or model}
+The two things most likely to be wrong \dash{} an unusable model name and a
+key without the right tier \dash{} surface only on a real call. The diagnostic
+makes one plain call and one search call and reports exactly which failed.
+Finding out in one second beats finding out from a member whose question
+silently failed.
+\end{callout}
+
+\subsection*{Two Gemini behaviours worth knowing}
+
+\textbf{Models are retired without notice.} \texttt{gemini-2.5-flash} returns
+HTTP 404 for accounts created after its deprecation, with the real reason only
+in the response body. If \texttt{ai:check} reports the model is unavailable,
+list what your key can actually use:
+
+\begin{lstlisting}[language=bash]
+curl -s "https://generativelanguage.googleapis.com/v1beta/models?key=$GEMINI_API_KEY" \
+  | grep -o '"name": "models/[^"]*"'
+\end{lstlisting}
+
+\textbf{Thinking tokens come out of the output budget.} Gemini's flash models
+reason before answering, and that reasoning is charged against
+\texttt{maxOutputTokens}. A small budget is consumed entirely by thinking and
+the call returns a valid response with no text \dash{} indistinguishable from a
+failure. The provider enforces a floor of 1024 tokens so this cannot happen.
+
+\section{Anthropic}
+
+Paid, and higher quality for difficult reasoning.
+
+\begin{lstlisting}[language=envfile]
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_MODEL=claude-opus-5
+\end{lstlisting}
+
+\begin{callout}{A consumer subscription is not API access}
+Anthropic API access is a separate paid product. A consumer Claude Pro or Max
+subscription does \textbf{not} include an API key and does \textbf{not} grant
+API access. Nor can the credentials of a Claude desktop or CLI session be
+repurposed to run a service: they are scoped to that application and expire
+with it. Obtain a key from the Anthropic Console
+(\url{https://console.anthropic.com/}); it is billed per token, independently
+of any chat subscription.
+\end{callout}
+
+Indicative rates per million tokens: Claude Opus 5 \$5 in / \$25 out, Claude
+Sonnet 5 \$2 / \$10, Claude Haiku 4.5 \$1 / \$5.
+
+\section{OpenAI}
+
+\texttt{AI\_PROVIDER=openai} is accepted by configuration but the provider is
+not implemented. It logs a clear warning and leaves AI disabled, rather than
+failing obscurely at the first question.
+
+\section{Switching providers}
+
+Two lines in \texttt{.env}. Only
+\texttt{src/ai/gemini/provider.ts} and \texttt{src/ai/anthropic/provider.ts}
+import a vendor SDK; every other file depends on the \texttt{AiProvider}
+interface. No command, service or test changes when the provider does.
+
+\section{Guardrails}
+
+Each is covered by a test.
+
+\begin{itemize}
+  \item \textbf{No individual medical advice.} A public-health community
+        attracts clinical questions. The assistant answers general knowledge
+        and declines to advise on any individual's care.
+  \item \textbf{No invented opportunities.} It will not fabricate a
+        scholarship, deadline, link or organisation. A model guessing a
+        deadline costs a member a real application.
+  \item \textbf{Member text is data}, wrapped as a quoted question, never
+        treated as instructions.
+  \item \textbf{A separate budget guard} \dash{} 15 questions per member per
+        hour, independent of the general rate limit, so one person cannot
+        spend the community's tokens.
+  \item \textbf{Errors never leak internals.} Provider messages may name a key
+        or an endpoint; the member-facing text never repeats them.
+  \item \textbf{Transient failures are retried.} Gemini returns HTTP 503
+        ``high demand'' often enough that a single attempt makes the feature
+        look broken. Retryable failures get three attempts with backoff;
+        an authentication error or a bad model name fails immediately.
+\end{itemize}
+
+\section{The .ask command}
+
+One command, not nine. Separate \texttt{.gpt}, \texttt{.claude} and
+\texttt{.gemini} commands would differ only in which company bills the
+operator, and would hard-code vendor choice into the command surface \dash{}
+precisely what this layer exists to avoid. Which model answers is an operator
+decision in \texttt{.env}; a member does not need to know.
+
+% =====================================================================
+\chapter{Integration: web search}
+\label{ch:websearch}
+
+\section{Why search is separate from the model}
+
+The fallback originally used the model's own built-in search \dash{}
+Anthropic's server-side tool, Google's Search grounding. Both turned out to be
+\textbf{paid} features. On a free Gemini key, grounded search returns HTTP 429
+\texttt{RESOURCE\_EXHAUSTED} on every call while plain generation works
+perfectly well.
+
+So the two were separated. Any search backend can supply the pages; any model
+can read them:
+
+\begin{lstlisting}
+  web search backend  ->  real URLs + snippets  ->  model extracts  ->  opportunities
+       (free)                                         (free tier)
+\end{lstlisting}
+
+This also makes the model's job narrower and more honest. It no longer searches
+or recalls; it extracts from numbered results it was handed, and every URL it
+reports can be checked against that list.
+
+\section{Choosing a backend}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lXl@{}}
+\toprule
+\textbf{Setting} & \textbf{Backend} & \textbf{Cost} \\
+\midrule
+\texttt{tavily} & Tavily, built for AI agents. Key from
+\url{https://app.tavily.com/} & free tier \\
+\texttt{searxng} & A SearXNG instance you host. No key, no quota, no vendor &
+free \\
+\texttt{provider} & The AI provider's own grounded search & billed by them \\
+\texttt{none} & No web fallback & \dash{} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{Tavily}
+
+\begin{lstlisting}[language=envfile]
+WEB_SEARCH_PROVIDER=tavily
+TAVILY_API_KEY=tvly-...
+\end{lstlisting}
+
+\subsection*{SearXNG}
+
+The zero-cost-forever option: you run it, so nobody can price you out of your
+own fallback.
+
+\begin{lstlisting}[language=bash]
+docker run -d -p 8080:8080 \
+  -e SEARXNG_BASE_URL=http://localhost:8080/ searxng/searxng
+\end{lstlisting}
+
+Enable the JSON API in that instance's \texttt{settings.yml}:
+
+\begin{lstlisting}
+search:
+  formats: [html, json]
+\end{lstlisting}
+
+\begin{lstlisting}[language=envfile]
+WEB_SEARCH_PROVIDER=searxng
+SEARXNG_URL=http://localhost:8080
+\end{lstlisting}
+
+\begin{callout}{Public SearXNG instances are not a supported target}
+Most serve a captcha to automated callers, and pointing a community bot at
+someone else's free instance is not reasonable use. Host your own.
+\end{callout}
+
+\section{How the fallback behaves}
+
+\begin{itemize}
+  \item \textbf{Only on zero results.} It never runs when the sources already
+        answered, so a normal search costs nothing.
+  \item \textbf{Results go through the same pipeline} \dash{} normalised,
+        filtered, de-duplicated, ranked \dash{} so they render identically.
+  \item \textbf{Marked \texttt{AI\_ASSISTED}}, and the reply says plainly that
+        these came from a web search and are not verified.
+  \item \textbf{Every entry must carry a real URL} copied from the search
+        results. Entries without one are discarded: a lead a member cannot
+        click through to verify looks actionable and is not.
+  \item \textbf{No invented posting dates.} The model has no reliable one, and
+        guessing would corrupt both the recency filter and the ranking.
+  \item \textbf{Charged against the member's AI budget} \dash{} the same
+        15/hour guard \texttt{.ask} uses.
+\end{itemize}
+
+\subsection*{Filtering is deliberately lenient here}
+
+Fallback results are filtered with \texttt{treatUnknownAsMatch}, and the
+reason matters. Web pages rarely state an ISO country code, and such a result
+never carries a posting date. Applying the strict source filters discarded
+every opportunity the fallback found \dash{} two genuine Kenyan scholarships,
+thrown away for lacking fields a web page does not have.
+
+Leniency applies to \emph{unknowns only}. A stated country that does not match
+is still rejected, an expired deadline is still rejected, and an explicit
+remote requirement is still enforced. Five regression tests pin that
+distinction.
+
+\section{Verified example}
+
+With \texttt{WEB\_SEARCH\_PROVIDER=tavily} and \texttt{AI\_PROVIDER=gemini},
+both on free tiers:
+
+\begin{lstlisting}
+.job public health scholarship kenya
+
+1. Jill Sanders Memorial Scholarship 2026 - HTAi
+   Deadline: 15 Oct 2026 (11 days)
+2. KMTC Fully Funded Scholarships for Specialised Health Training
+   Kenya Medical Training College
+
+.job global health fellowship africa
+
+1. TIMERA Fellowship 2026-2029 - Epidemic Modelling for African Public Health
+   Deadline: 15 Oct 2026 (11 days)
+2. FOR-GHP Fellowship 2027-2028 - German Federal Ministry of Health
+   Deadline: 21 Oct 2026 (17 days)
+3. Healthy Futures South Africa PhD Fellowship - University of Cape Town
+   Deadline: 31 Oct 2026 (27 days)
+\end{lstlisting}
+
+Real deadlines, real links, flagged as unverified. Total running cost: nothing.
+
+% =====================================================================
+\chapter{Command reference}
+
+All commands begin with \texttt{.} by default. Thirty-four commands, sixty-three
+names including aliases.
+
+\section{Opportunities}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Command} & \textbf{Aliases} & \textbf{Description} \\
+\midrule
+\texttt{.job <keywords>} & & Search by keyword \\
+\texttt{.jobs <filters>} & & Search by location, type or recency \\
+\texttt{.scholarships} & \texttt{.scholarship} & Scholarships and tuition
+funding \\
+\texttt{.internships} & \texttt{.internship} & Internships and attachments \\
+\texttt{.fellowships} & \texttt{.fellowship} & Fellowships \\
+\texttt{.research} & \texttt{.projects} & Research, PhD and postdoctoral posts \\
+\texttt{.grants} & \texttt{.grant}, \texttt{.funding} & Grants and calls for
+proposals \\
+\texttt{.events} & \texttt{.event} & Events, webinars, summits \\
+\texttt{.conferences} & \texttt{.conference} & Conferences and calls for
+abstracts \\
+\texttt{.training} & \texttt{.trainings}, \texttt{.courses} & Short courses and
+workshops \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Navigating results}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Command} & \textbf{Aliases} & \textbf{Description} \\
+\midrule
+\texttt{.next} & \texttt{.more} & Next page \\
+\texttt{.prev} & \texttt{.previous}, \texttt{.back} & Previous page \\
+\texttt{.details <n>} & \texttt{.detail}, \texttt{.info} & Full description of
+result \emph{n} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Group management}
+
+Admin-only. Authorisation is checked against the \emph{group's} own admin list
+on every call, never inferred from the command name. Participant actions
+additionally require the bot itself to be an admin, and it refuses to act on
+itself \dash{} removing or demoting itself would leave the group unmanaged with
+no way back.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Command} & \textbf{Aliases} & \textbf{Description} \\
+\midrule
+\texttt{.groupinfo} & \texttt{.ginfo} & Details and moderation settings (any
+member) \\
+\texttt{.add <number>} & & Add someone to the group \\
+\texttt{.kick @user} & \texttt{.remove} & Remove someone (refuses to remove an
+admin) \\
+\texttt{.promote @user} & & Make someone a group admin \\
+\texttt{.demote @user} & & Remove someone as group admin \\
+\texttt{.open} / \texttt{.close} & \texttt{.unmute} / \texttt{.mute} & Who may
+send messages \\
+\texttt{.lock} / \texttt{.unlock} & & Who may edit group info \\
+\texttt{.welcome} & & Greet people who join: \texttt{on}, \texttt{off},
+\texttt{set <message>}, \texttt{test}, \texttt{reset} \\
+\texttt{.warn @user} & & Issue a warning, with an optional reason \\
+\texttt{.warnings @user} & \texttt{.warns} & Active warnings, with reasons and
+who issued them \\
+\texttt{.resetwarns @user} & \texttt{.clearwarns} & Clear warnings \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Three design decisions are worth knowing:
+
+\begin{itemize}
+  \item \textbf{Targets come from real WhatsApp mentions}, read from the
+        message's context information, not from parsing text that looks like
+        \texttt{@2547...}. The visible handle is only a label, so trusting it
+        would let anyone forge a target.
+  \item \textbf{Warnings are an append-only log}, not a counter. Clearing them
+        deactivates rather than deletes, so an administrator asked why a member
+        was removed can answer with evidence.
+  \item \textbf{Nobody is removed automatically unless an administrator
+        chose it}, by setting a moderation rule to \texttt{remove} (see
+        below). Otherwise reaching the warning limit only tells an
+        administrator, who decides.
+\end{itemize}
+
+\section{Moderation}
+
+The bot reads every message in a group and enforces that group's rules.
+\textbf{Group admins, platform administrators and the bot itself are never
+moderated.} Deleting and removing need the bot to be a group admin; without
+that it can only warn, and says so once an hour rather than on every message.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Command} & \textbf{Description} \\
+\midrule
+\texttt{.mod} & Overview of this group's rules (alias \texttt{.moderation}) \\
+\texttt{.mod on} & Recommended protection: delete and warn for links,
+adverts and spam \\
+\texttt{.mod strict} & The same, and remove at the warning limit \\
+\texttt{.mod off} & Every rule off \\
+\texttt{.mod test <message>} & What a message would trigger, without deleting
+anything \\
+\texttt{.mod copy} & Copy these rules to the other groups of the WhatsApp
+community the caller administers \\
+\texttt{.antilink <action> [invites/all]} & \texttt{invites} (default): other
+WhatsApp groups and channels, \texttt{wa.me}, Telegram, Discord. Job links
+still work. \texttt{all}: every link \\
+\texttt{.antilink allow <domain>} & Never touch links to a domain, such as
+\texttt{who.int} (\texttt{unallow} removes it) \\
+\texttt{.antipromo <action>} & Adverts, sales pitches, money schemes,
+follower boosting, ``join my channel'' (alias \texttt{.antiad}) \\
+\texttt{.antipromo ai on/off} & Let the AI decide borderline posts the rules
+cannot \\
+\texttt{.antispam <action>} & More than 6 messages in 10 seconds, the same
+message 3 times, or the same message in 3 groups within 10 minutes \\
+\texttt{.badword add <word>} & Ban a word or phrase; \texttt{del},
+\texttt{list} and \texttt{clear} manage the list \\
+\texttt{.badword <action>} & What to do about banned words \\
+\texttt{.silence @user [30m/2h/1d]} & Delete everything a member posts for a
+while: one hour by default, up to 30 days \\
+\texttt{.unsilence @user} & Lift a silence; \texttt{.silenced} lists them \\
+\texttt{.warnlimit <1-10>} & Warnings before \texttt{remove} rules remove
+someone \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Each \texttt{<action>} is one of:
+
+\begin{itemize}
+  \item \texttt{warn} \dash{} warn the sender;
+  \item \texttt{delete} \dash{} delete the message and warn (\texttt{on} means
+        this);
+  \item \texttt{remove} \dash{} delete, warn, and remove the sender at the
+        warning limit;
+  \item \texttt{off}.
+\end{itemize}
+
+How it behaves:
+
+\begin{itemize}
+  \item \textbf{Tuned for an opportunities community.} Posts that mention
+        scholarships, vacancies, deadlines or stipends get the benefit of the
+        doubt, so an application link or a stipend amount alone never counts
+        as an advert. \texttt{.mod test} shows the score and the signals behind
+        it before a rule is turned on.
+  \item \textbf{One offence per minute.} A burst of rule-breaking earns one
+        warning per rule per minute, while every offending message is still
+        deleted, so one flood does not use up all of a member's warnings and
+        the bot never floods the group with its own notices.
+  \item \textbf{The AI is a second opinion, never the first.} Only posts the
+        rules already find suspicious reach it, only in groups that turned it
+        on, within 60 reviews an hour. An AI error leaves the post alone.
+  \item \textbf{Either identity works.} WhatsApp lists members of some groups
+        by an anonymous id rather than their number. Admin checks, silences
+        and warnings match members by both.
+\end{itemize}
+
+Settings live in the database and take effect on the next message. The tables
+are added automatically the first time the new version starts.
+
+\section{Welcome messages}
+
+\texttt{.welcome on} greets everyone who joins a group: added by an admin,
+through an invite link, by an approved request, or from the community. In a
+custom message set with \texttt{.welcome set}, \texttt{\{name\}} tags the
+newcomers and \texttt{\{group\}} is replaced with the group's name; without
+one, a standard message introduces the community and points to
+\texttt{.menu}. \texttt{.welcome test} previews it, tagging the admin who
+asked, and \texttt{.welcome reset} returns to the standard message.
+
+\begin{itemize}
+  \item \textbf{One welcome per wave.} People who join within a few seconds of
+        each other are welcomed in a single message tagging all of them (up to
+        twenty, then ``and $N$ others''), and a group gets at most one welcome
+        a minute. A shared invite link never turns the bot into a flood.
+  \item \textbf{No late welcomes.} Joins that happened while the bot was
+        offline for more than ten minutes are skipped.
+  \item \textbf{The bot must be able to post.} In a group closed to admins
+        (\texttt{.close}), make it an admin.
+\end{itemize}
+
+\section{System}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Command} & \textbf{Aliases} & \textbf{Description} \\
+\midrule
+\texttt{.help [command]} & \texttt{.h}, \texttt{.commands} & Command list, or
+help for one command \\
+\texttt{.menu} & & Main menu \\
+\texttt{.start} & & Getting started \\
+\texttt{.about} & & About the Colosseum \\
+\texttt{.sources} & \texttt{.source} & Which sources are searched \\
+\texttt{.ping} & \texttt{.alive}, \texttt{.uptime} & Liveness, uptime, memory \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Locations}
+
+Several locations can be given at once, separated by commas or spaces:
+
+\begin{lstlisting}
+.job public health nairobi, kisumu
+.job public health nairobi, kampala
+.scholarships kenya, uganda, tanzania
+\end{lstlisting}
+
+Countries are matched as \textbf{OR}. Named cities additionally give a ranking
+boost rather than acting as a hard filter: someone asking for Nairobi still
+sees a listing that only says ``Kenya'', just below the ones that say Nairobi.
+
+\begin{callout}{Why this is a list and not one value}
+The query originally held a single country, resolved from the whole location
+string. The moment two places were named it resolved to nothing and
+\emph{silently dropped the location filter altogether}, so
+\texttt{nairobi, kampala} quietly searched the entire world. A list makes the
+failure impossible.
+\end{callout}
+
+\section{Filters}
+
+Filters are recognised anywhere in the arguments and combine freely.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lXl@{}}
+\toprule
+\textbf{Kind} & \textbf{Accepted} & \textbf{Example} \\
+\midrule
+Location & Country or city names & \texttt{.jobs nairobi} \\
+Region & \texttt{africa}, \texttt{worldwide}, \texttt{global} &
+\texttt{.jobs africa} \\
+Remote & \texttt{remote}, \texttt{work from home} & \texttt{.jobs remote} \\
+Type & \texttt{internship}, \texttt{scholarship}, \texttt{fellowship},
+\texttt{research}, \texttt{grant}, \texttt{conference}, \texttt{training},
+\texttt{volunteer}, \texttt{hackathon}, \texttt{event}, \texttt{job} &
+\texttt{.jobs internship} \\
+Recency & \texttt{today}, \texttt{latest}, \texttt{new}, \texttt{recent},
+\texttt{this week}, \texttt{month} & \texttt{.jobs today} \\
+Deadline & \texttt{deadline}, \texttt{closing soon} &
+\texttt{.jobs closing soon} \\
+Experience & \texttt{entry-level}, \texttt{junior}, \texttt{graduate},
+\texttt{trainee} & \texttt{.jobs entry-level} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Filters stack: \texttt{.jobs nairobi internship today}.
+
+Recognised filter words are removed from the free-text search, so
+\texttt{.jobs nairobi} does not additionally require the word ``nairobi'' in the
+title.
+
+% =====================================================================
+\chapter{The opportunity pipeline}
+
+\section{Normalisation}
+
+Every source passes through one funnel, so storage, search, ranking and
+rendering only ever see one shape. Descriptions are stripped of HTML, with
+\texttt{<script>} and \texttt{<style>} bodies removed first. URLs are validated:
+only absolute \texttt{http} and \texttt{https} are accepted, so
+\texttt{javascript:}, \texttt{data:} and \texttt{file:} never reach a user.
+Dates outside the years 2000 to 2100 are rejected as placeholders.
+
+\begin{callout}{Entity-encoded HTML}
+Some sources deliver HTML that is itself entity-encoded. Stripping tags before
+decoding leaves markup visible as text; decoding before stripping would turn a
+literal ``a \&lt; b \&gt; c'' into deleted content. The implementation strips,
+decodes, and re-strips only when the result genuinely looks like markup.
+\end{callout}
+
+\section{Classification}
+
+Rule-based, running with or without an AI provider. Each classifier reads only
+the text where its signal actually lives \dash{} pointing all of them at the
+full description produced nonsense, such as a vacancy mentioning ``present at
+international conferences'' being typed as a conference.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Classifier} & \textbf{Reads} & \textbf{Rationale} \\
+\midrule
+Type & title, tags & These name what a posting \emph{is}. \\
+Categories & title and tags (authoritative); body requires two or more matches
+& One passing mention of ``mental health'' in a benefits list is not a subject
+signal. \\
+Experience & title, tags & ``Senior stakeholders'' in a body is not a seniority
+signal. \\
+Education & title, body & Qualifications live in the requirements section. \\
+Remote & title, location, body & Remote arrangements are often stated only in
+prose. \\
+Country & title, location & Resolved only when exactly one country is named. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{De-duplication}
+
+Two passes. First, an exact content fingerprint over canonical title,
+organisation and type. When the organisation is unknown, the source slug is
+mixed in, so two unrelated employers who both omitted their name do not collapse
+into one record.
+
+Second, near-duplicates within the same organisation and type: one title being
+the other plus a qualifier such as ``(Remote)'' or a duty station. Where the
+organisation is unknown, no merging occurs \dash{} two employers can advertise
+the same title, and wrongly hiding one costs a member a real opportunity.
+
+The surviving copy is chosen by source trust first, then completeness.
+
+\section{Ranking}
+
+\begin{center}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Component} & \textbf{Weight} \\
+\midrule
+Relevance & 40\% \\
+Recency & 20\% \\
+Verification and source trust & 20\% \\
+Deadline urgency & 10\% \\
+Member profile fit & 10\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Weights live in one object and can be tuned without touching scoring logic.
+Deadline urgency peaks for deadlines three to twenty-one days away \dash{} far
+enough to apply, close enough to matter.
+
+Relevance for multi-term queries is phrase-first:
+
+\begin{center}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Match} & \textbf{Score} \\
+\midrule
+Phrase in title & 1.00 \\
+All terms in title & 0.90 \\
+Phrase in tags & 0.75 \\
+Phrase in body & 0.60 \\
+All terms in title or tags & 0.55 \\
+Scattered partial & coverage $\times$ 0.2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A quality gate of 0.25 applies when the user supplied terms. Several upstreams
+ignore or loosely honour their own search parameter, so without a gate they
+flood the list. Fewer, truer results is the correct trade for a community where
+a bad lead costs someone a real application.
+
+\section{Verification lifecycle}
+
+\begin{lstlisting}
+DISCOVERED --> PENDING_REVIEW --> VERIFIED --> PUBLISHED --> EXPIRED
+                     \--------------> REJECTED
+\end{lstlisting}
+
+Everything enters as DISCOVERED and UNVERIFIED. Promotion is a separate,
+reviewed step, never a side effect of ingestion. The upsert path deliberately
+does not write status, verification status, verification time or review notes:
+those record human decisions, and an automated synchronisation overwriting them
+would silently re-approve content behind an administrator's back.
+
+% =====================================================================
+\chapter{Security and privacy}
+
+\begin{itemize}
+  \item \textbf{Secrets only in the environment.} No key is committed;
+        \texttt{.env} and \texttt{auth/} are git-ignored.
+  \item \textbf{Minimal personal data.} A member record holds a WhatsApp JID
+        plus whatever the member chose to provide. No push names, profile
+        photographs or contact-book entries are copied.
+  \item \textbf{No personal data in logs.} JIDs are redacted to the form
+        \texttt{254***060@s.whatsapp.net}. Raw message text is never logged;
+        only the resolved command name is.
+  \item \textbf{Anonymous HTTP surface.} \texttt{/api/status} exposes no phone
+        number or member identifier.
+  \item \textbf{Administrator authorisation} is checked against
+        \texttt{ADMIN\_NUMBERS} on the verified sender, before a handler runs.
+        Administrator commands return the unknown-command reply to
+        non-administrators, so their existence is not confirmed.
+  \item \textbf{Persisted rate limiting} per member, so restarting cannot reset
+        a flood. Public HTTP endpoints are limited per IP.
+  \item \textbf{URL validation and HTML sanitisation} on everything originating
+        from a source.
+  \item \textbf{No remote code and no remote control.} The platform never
+        downloads code at runtime and never takes instructions from a remote
+        feed. Everything it runs is in the repository and reviewable.
+  \item \textbf{Failure isolation.} A failing source, a thrown handler or an
+        unhandled rejection cannot take the service down.
+\end{itemize}
+
+% =====================================================================
+\chapter{Development}
+
+\section{Adding a command}
+
+Create a file under \texttt{src/commands/<category>/}:
+
+\begin{lstlisting}[language=Java]
+import type { Command } from '../types.js';
+
+export const profileCommand: Command = {
+  name: 'profile',
+  aliases: ['me'],
+  category: 'members',
+  summary: 'View or edit your opportunity profile',
+  usage: '.profile',
+  examples: ['.profile'],
+  // adminOnly: true,            // authorised against ADMIN_NUMBERS
+  // exemptFromRateLimit: true,  // only for trivial commands
+  async handler(context) {
+    await context.reply(`Country: ${context.member.country ?? 'not set'}`);
+  },
+};
+\end{lstlisting}
+
+Then import and list it in \texttt{src/commands/registry.ts}. That is all:
+\texttt{.help} is generated from the registry, so documentation cannot drift,
+and name or alias collisions throw at startup rather than silently shadowing.
+
+The context provides \texttt{reply}, \texttt{react}, \texttt{args},
+\texttt{argv}, \texttt{member}, \texttt{isAdmin}, \texttt{log} and session
+accessors. A handler never touches the WhatsApp socket, so it is unit-testable
+with no connection.
+
+For a search-backed command, delegate to the shared pipeline:
+
+\begin{lstlisting}[language=Java]
+import { runSearch } from '../opportunities/run-search.js';
+
+async handler(context) {
+  await runSearch(context, {
+    forcedTypes: ['SCHOLARSHIP'],
+    commandLabel: '.scholarships',
+  });
+}
+\end{lstlisting}
+
+\section{Adding a source}
+
+See Chapter~\ref{ch:sources}.
+
+\section{Testing}
+
+\begin{lstlisting}[language=bash]
+npm test             # 133 unit tests
+npm run test:watch
+npm run check        # typecheck plus tests
+\end{lstlisting}
+
+The 133 unit tests cover pure logic and require neither a database nor a
+network.
+Test configuration supplies the environment variables that startup validation
+requires.
+
+% =====================================================================
+\chapter{Troubleshooting}
+
+\section*{Cannot reach the database}
+
+\begin{lstlisting}[language=bash]
+./scripts/dev-services.sh start
+npm run db:push
+./scripts/dev-services.sh status
+\end{lstlisting}
+
+If \texttt{localhost} fails, use \texttt{127.0.0.1}: \texttt{localhost} can
+resolve to IPv6, which the development cluster does not bind.
+
+\section*{Invalid environment configuration}
+
+The message names each offending variable. Common causes: \texttt{DATABASE\_URL}
+missing or not a URL; \texttt{ADMIN\_NUMBERS} or
+\texttt{WHATSAPP\_PAIR\_NUMBER} containing \texttt{+}, spaces or dashes
+(digits only).
+
+\section*{WhatsApp will not connect}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Symptom} & \textbf{Cause and remedy} \\
+\midrule
+No QR code appears & \texttt{WHATSAPP\_PAIR\_NUMBER} is set. Blank it for QR
+mode. \\
+QR expires & They rotate every twenty seconds; a new one is printed
+automatically. \\
+``Session logged out'' & The account unlinked this device. Stop, delete
+\texttt{WHATSAPP\_AUTH\_DIR}, pair again. Not retried by design. \\
+Connects then drops & Another bot is using the same number. Give the platform
+its own. \\
+Pairing code rejected & Digits only, international format, no \texttt{+}. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section*{Few or no results}
+
+A search returning nothing is usually a source-coverage gap, not a defect.
+Check \texttt{.sources} or \texttt{/api/sources} to see what was actually
+searched. The aggregators carry little public-health or African content;
+result quality comes from employer career boards and ReliefWeb. See
+Chapter~\ref{ch:sources}.
+
+\section*{A source keeps failing}
+
+Failures are logged at warning level because an unreachable upstream is
+operational noise, not a platform fault. Searches continue with the remaining
+sources and the reply states that the list may be incomplete. Do not lower a
+connector's minimum fetch interval below the upstream's stated policy;
+Remotive blocks excessive requests.
+
+\section*{Port already in use}
+
+\begin{lstlisting}[language=bash]
+ss -ltnp | grep 3100
+\end{lstlisting}
+
+Change \texttt{PORT}, or stop the process holding it. Note that a development
+server started with \texttt{tsx} does not match a process search for
+\texttt{dist/index.js}.
+
+\section*{db:push fails with constraint errors on PostgreSQL 18}
+
+PostgreSQL 18 gives NOT NULL constraints real names
+(\texttt{members\_id\_not\_null}). drizzle-kit 0.30 does not recognise them, so
+its diff tries to \texttt{DROP} them and fails with \texttt{42P16} on any
+constraint backing a primary key \dash{} possibly after having already created
+new tables.
+
+Apply schema changes with explicit SQL instead:
+
+\begin{lstlisting}[language=bash]
+psql "$DATABASE_URL" -f drizzle/0001_group_moderation.sql
+\end{lstlisting}
+
+Migrations in \texttt{drizzle/} are written to be idempotent
+(\texttt{IF NOT EXISTS}), so re-running one is safe. On PostgreSQL 17 or
+earlier, \texttt{db:push} works normally.
+
+\section*{db:push cannot resolve a module}
+
+\texttt{drizzle-kit} bundles the schema as CommonJS and cannot resolve a
+\texttt{.js} specifier onto a \texttt{.ts} file. The schema therefore declares
+enum values directly and imports only types, guarded by a compile-time
+assertion. If you add a value to the domain, add it to the schema too;
+\texttt{npm run typecheck} will tell you if you forget.
+
+% =====================================================================
+\chapter{Roadmap}
+\label{ch:roadmap}
+
+Release 1.0 ``Neo'' is complete. The database schema already carries the
+columns the later work needs, so none of it requires migrating existing data.
+
+\section{What Neo includes}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Area} & \textbf{Delivered} \\
+\midrule
+Opportunities & Generalised model across 14 types, normalisation,
+rule-based classification, two-pass de-duplication, weighted ranking,
+verification state machine \\
+Sources & Six connectors, isolated and rate-limited, with attribution
+obligations carried as data \\
+Surfaces & WhatsApp (42 commands) and a public web search page, both on one
+search engine \\
+Groups & Participant management; enforced moderation of links, adverts, spam
+and banned words; silencing; welcome messages; append-only warnings \\
+AI & Provider abstraction with Gemini (default) and Anthropic; \texttt{.ask};
+guardrails and a per-member budget \\
+Web search & Tavily and self-hosted SearXNG backends, plus provider grounding;
+live fallback when sources find nothing \\
+Platform & PostgreSQL, rate limiting, admin authorisation, structured logging,
+health endpoints, automatic database migrations, 214 tests \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Next}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Theme} & \textbf{Contents} \\
+\midrule
+Opportunity engine & Redis and BullMQ, scheduled synchronisation,
+database-first search so stored opportunities become searchable, expiry sweep,
+broken-link checking, more connectors \\
+Community intelligence & Profiles, subscriptions, personalised
+recommendations, notifications, daily and weekly digests, deadline alerts \\
+Administration & React dashboard, authenticated admin API, review queue,
+source management, analytics, broadcasts \\
+Multi-AI & OpenAI provider, routing by task and cost, fallback chains \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{callout}{Stored opportunities are not yet searchable}
+Search queries the live sources on every request; the database is written to
+but never read from for search. Accumulated opportunities are therefore a
+record, not an index. Database-first search is the first item of the next
+phase, and it is what makes the store pay for itself.
+\end{callout}
+
+\begin{callout}{Multi-tenancy is a sequencing decision, not a later feature}
+If the product is to become multi-tenant software-as-a-service, a tenant
+identifier must be added to every table \emph{before} real organisations and
+real data exist. While the database holds only disposable records the migration
+is nearly free; after the first paying community is onboarded it becomes a
+painful backfill with downtime. The search engine itself is unaffected.
+\end{callout}
+
+\appendix
+\chapter{Operational reference}
+
+\section{Default ports}
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Service} & \textbf{Port} & \textbf{Configurable via} \\
+\midrule
+Platform HTTP & 3100 & \texttt{PORT} \\
+Development PostgreSQL & 55432 & \texttt{PG\_PORT} \\
+Development Redis & 56379 & \texttt{REDIS\_PORT} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Operational limits}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lrX@{}}
+\toprule
+\textbf{Limit} & \textbf{Value} & \textbf{Rationale} \\
+\midrule
+Source fetch timeout & 12\,s & Ceiling on any single upstream call \\
+Search rate limit & 30 / 5\,min & Per IP; protects shared upstream quotas \\
+Metadata rate limit & 120 / 5\,min & Per IP \\
+Member token bucket & 20 tokens & Refills 4 per minute, persisted \\
+WhatsApp page size & 5 & Readable on a phone \\
+Web page size & 12 (max 30) & \\
+Stored description & 4{,}000 chars & Full text lives at the source \\
+Response size ceiling & 12\,MB & Per upstream response \\
+Session lifetime & 30 minutes & For pagination and detail views \\
+Reconnect backoff & capped at 60\,s & Exponential \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Further reading}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Document} & \textbf{Contents} \\
+\midrule
+\texttt{README.md} & Quick-start and day-to-day reference \\
+\texttt{docs/ARCHITECTURE.md} & Design decisions and the reasoning behind them \\
+\texttt{docs/ROADMAP.md} & Phase detail \\
+\texttt{docs/LEGACY-WOLFBOT-ANALYSIS.md} & Analysis of the predecessor system
+and why this platform was built as a new service \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\vspace{2cm}
+\begin{center}
+\textcolor{phcDim}{\rule{0.4\textwidth}{0.4pt}}\\[8pt]
+\textbf{Public Health Colosseum}\\[2pt]
+\textcolor{phcDim}{Powered by SCIAT SOLUTIONS}
+\end{center}
+
+\end{document}

@@ -363,11 +363,50 @@ repeatedly. Give this platform a number of its own.
 % =====================================================================
 \chapter{Installation}
 
-\section{Obtain and install}
+\section{On a server: one command}
+
+To run the bot, log in to a Linux server over SSH as the user who will run it,
+and run:
 
 \begin{lstlisting}[language=bash]
-git clone <your-repository-url> phc-platform
-cd phc-platform
+curl -fsSL https://raw.githubusercontent.com/Maerih/phc-bot/main/install.sh | bash
+\end{lstlisting}
+
+It downloads the bot from GitHub into \texttt{\textasciitilde/phc-bot} and runs
+\texttt{./ctl.sh start}, which does the rest in six steps:
+
+\begin{enumerate}
+  \item \textbf{Checks the machine}: Linux, CPU type, required tools, disk
+        and memory.
+  \item \textbf{Gets Docker}: uses Docker if it is installed, otherwise
+        downloads a private copy into the bot's folder and runs it as the
+        user, with no \texttt{sudo}. Anything only an administrator can
+        provide is named, with the exact command to run once.
+  \item \textbf{Configures}: on the first run, asks for the admin WhatsApp
+        numbers, an optional Gemini key, an optional Tavily key and the
+        timezone, and writes \texttt{.env}; on every run, checks it and
+        tests the Gemini key with Google.
+  \item \textbf{Builds}, only when the code changed, then validates every
+        setting with the bot's own rules before anything restarts.
+  \item \textbf{Starts the database}, creating it and its tables on the first
+        run.
+  \item \textbf{Starts the bot}, restarting it only when the code or settings
+        changed, offers to start it after a reboot, and shows the WhatsApp QR
+        code in the terminal.
+\end{enumerate}
+
+\texttt{./ctl.sh start} is safe to run at any time: it changes only what needs
+changing. \texttt{./ctl.sh update} pulls the latest version from GitHub and
+then does the same, keeping the WhatsApp session, settings and data.
+\texttt{./ctl.sh doctor} runs every check without changing anything, and
+\texttt{./ctl.sh setup} asks the configuration questions again.
+\texttt{docs/DEPLOY-VPS.md} covers the details.
+
+\section{For development}
+
+\begin{lstlisting}[language=bash]
+git clone https://github.com/Maerih/phc-bot.git
+cd phc-bot
 npm install
 \end{lstlisting}
 

@@ -10,11 +10,19 @@ It searches **jobs, internships, scholarships, fellowships, research posts, gran
 
 > **Release 1.0 — "Neo".** Complete and verified. Later work is specified in [docs/ROADMAP.md](docs/ROADMAP.md) but not built. This README documents only what actually works today; where something is unverified, it says so.
 
+**Install on a server — one command:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Maerih/phc-bot/main/install.sh | bash
+```
+
+It downloads the bot into `~/phc-bot` and runs `./ctl.sh start`, which checks the machine, gets Docker (a private copy if none is installed, no sudo), asks a few setup questions, builds, starts the database and the bot, and shows the WhatsApp QR code in the terminal. **Update later with `./ctl.sh update`**; it pulls the latest version from GitHub and keeps the session, settings and data. `./ctl.sh doctor` runs every check without changing anything.
+
 **Deploying:**
-- [docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md) — **recommended.** One script, `./ctl.sh start`, runs the bot and its database in containers.
+- [docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md) — **recommended.** The install above, step by step.
 - [docs/DEPLOY-CPANEL.md](docs/DEPLOY-CPANEL.md) — shared hosting, with its limitations stated plainly.
 
-**Full manual:** [docs/phc-platform-manual.pdf](docs/phc-platform-manual.pdf) — 40 pages covering installation, configuration and every integration.
+**Full manual:** [docs/phc-platform-manual.pdf](docs/phc-platform-manual.pdf) — 43 pages covering installation, configuration and every integration.
 
 ---
 
@@ -153,9 +161,11 @@ Not required for Phase 1: Redis (Phase 2 queues), an Anthropic or OpenAI API key
 
 ## Installation
 
+To *run* the bot on a server, use the one-command install above. This section is for working on the code:
+
 ```bash
-git clone <your-repository-url> phc-platform
-cd phc-platform
+git clone https://github.com/Maerih/phc-bot.git
+cd phc-bot
 npm install
 ```
 

@@ -2,181 +2,129 @@
 
 The recommended way to run the platform. Unlike shared hosting, a VPS gives the bot what it actually needs: one process that stays up, a disk that persists, and no one recycling it behind your back.
 
-Everything is driven by **`./ctl.sh`**. It runs the bot and PostgreSQL as two containers and keeps everything the bot owns inside the project folder.
-
 ---
 
-## What you need
+## Install: one command
+
+Log in to the server over SSH, as the user who will run the bot (not root), and run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Maerih/phc-bot/main/install.sh | bash
+```
+
+That downloads the bot from GitHub into `~/phc-bot` and runs `./ctl.sh start`, which does everything else:
+
+| Step | What happens |
+|---|---|
+| 1. Checking this machine | Linux and CPU type, the tools it needs, disk space, memory |
+| 2. Docker | Uses Docker if it is installed and you can use it. Otherwise downloads a private copy into the bot's folder and runs it as your user, with no sudo and nothing installed system-wide. Checks the bot's port is free. |
+| 3. Configuration | First run: asks a few questions and writes `.env` (see below). Every run: checks the admin numbers, tests the Gemini key with Google, and says which features are on |
+| 4. Building the bot | Builds the bot, but only when the code changed since the last build. Then runs the bot's own settings check, so a typo in `.env` is reported here instead of crashing the bot |
+| 5. Database | Creates PostgreSQL and its tables on the first run; starts it after that |
+| 6. Starting the bot | Starts the bot, or restarts it if the code or settings changed. Offers to start it by itself after a reboot, then shows the WhatsApp QR code right in the terminal |
+
+The questions on the first run:
+
+- **Admin WhatsApp number(s):** country code first, digits only, for example `254712345678`. Admins can run every command, including group moderation.
+- **Gemini API key** (optional): turns on `.ask` and searching online when the sources find nothing. A free key: <https://aistudio.google.com/apikey>.
+- **Tavily API key** (optional): turns on live web search for scholarships and fellowships. A free key: <https://app.tavily.com>.
+- **Timezone** (Enter keeps Africa/Nairobi).
+
+Keys are typed hidden, and `.env` is readable only by you. Answer again any time with `./ctl.sh setup`.
+
+The first run takes a few minutes, mostly downloading. Later runs take seconds.
+
+### What the server needs
 
 | | |
 |---|---|
-| A Linux VPS | Any x86-64 distribution. Ubuntu or Debian are simplest. |
-| Memory | 1 GB is comfortable. The bot itself uses ~90 MB; PostgreSQL the rest. |
-| Disk | 2 GB free, mostly for container images. |
-| A WhatsApp number | **Its own number** — not one another bot already uses. |
+| A Linux server | x86-64 or ARM64. Ubuntu or Debian are simplest. |
+| Memory | 1 GB is comfortable. |
+| Disk | 3 GB free. |
+| `git` and `curl` | On almost every server image already. If not: `sudo apt install git curl` |
+| A WhatsApp number | **Its own number**, not one another bot is using. |
 
-You do **not** need Node.js or PostgreSQL installed. Both run in containers.
+If Docker is not installed, the private copy needs a few things from the system that only an administrator can set up, once: the `uidmap` package, a user-ID range for your user and, on Ubuntu 23.10 and later, an AppArmor rule. `./ctl.sh start` checks all of them, and **when one is missing it prints the exact command to run**. Nothing is guessed.
 
----
-
-## 1. Get Docker
-
-Pick one.
-
-### Option A — system Docker (simplest, survives reboots by itself)
-
-If you have `sudo` on the VPS:
+If you have sudo and would rather install Docker system-wide, do it first. The bot then uses it, and Docker brings the bot back after a reboot by itself:
 
 ```bash
 curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker "$USER"
+sudo usermod -aG docker "$USER"   # then log out and back in
 ```
 
-Log out and back in so the group change applies, then check:
+### Without the one-liner
+
+The same thing by hand:
 
 ```bash
-docker info
-```
-
-The daemon starts at boot automatically, and with it the bot.
-
-### Option B — rootless, folder-local, no sudo
-
-Docker's binaries go into the project's `.runtime/` folder and run as your own user. Nothing is installed system-wide.
-
-```bash
-./ctl.sh install-docker
-```
-
-It needs the `uidmap` package. Most VPS images already have it; if `install-docker` warns that `newuidmap` is missing, an administrator runs `apt install uidmap` once.
-
-> **Reboots:** a rootless daemon does not start on boot by itself. After a VPS restart, run `./ctl.sh start` again. To make it automatic you would need a user service plus `loginctl enable-linger` — a one-time change outside the project folder. If unattended restarts matter, Option A is the simpler answer.
-
-`ctl.sh` prefers a working system Docker when there is one, and falls back to the folder-local copy otherwise. You never choose between them by hand.
-
----
-
-## 2. Copy the project to the VPS
-
-From your own computer:
-
-```bash
-rsync -av --exclude node_modules --exclude dist --exclude .runtime \
-  --exclude .devservices --exclude data --exclude auth --exclude logs \
-  ./phc-platform/ you@your-vps:~/phc-platform/
-```
-
-Or `git clone` it there.
-
-**Do not copy a WhatsApp session (`auth/` or `data/auth/`) from another machine that is still running the bot.** Two machines on one session destroy it — see [The one rule](#the-one-rule).
-
----
-
-## 3. Configure
-
-On the VPS:
-
-```bash
-cd ~/phc-platform
-cp .env.example .env
-nano .env
-```
-
-Fill in at least:
-
-```ini
-ADMIN_NUMBERS=2547XXXXXXXX
-AI_PROVIDER=gemini
-GEMINI_API_KEY=your-key
-WEB_SEARCH_PROVIDER=tavily
-TAVILY_API_KEY=tvly-...
-```
-
-Leave `PAIRING_PAGE=off` (the default). On a server you pair in the terminal, so no web page ever shows the QR.
-
-You do **not** set `DATABASE_URL`, `PORT` or `WHATSAPP_AUTH_DIR` — `ctl.sh` sets those to match the containers, and creates a random database password the first time.
-
----
-
-## 4. Start
-
-```bash
+git clone https://github.com/Maerih/phc-bot.git ~/phc-bot
+cd ~/phc-bot
 ./ctl.sh start
 ```
 
-The first run builds the image (downloads Node and the npm packages) and creates the database with the full schema. That takes a few minutes. Later starts take seconds, and apply any database changes a new version brings by themselves.
-
-When it finishes:
-
-```
-Docker:     running (system)
-phc-db:     running
-phc-app:    running / healthy
-WhatsApp:   not paired — run ./ctl.sh pair
-```
-
-If WhatsApp is not paired yet, `start` goes straight on to show the QR code — see the next step.
-
 ---
 
-## 5. Pair WhatsApp
+## Pair WhatsApp
 
-In your SSH session on the VPS:
-
-```bash
-./ctl.sh pair
-```
-
-The QR code is drawn right there in the terminal. Scan it with **WhatsApp → Settings → Linked devices → Link a device**. WhatsApp issues a new code about every 20 seconds and the terminal redraws it; scan the newest. When it connects the view closes by itself:
+At the end of the first start, the QR code is drawn in the terminal. Scan it with **WhatsApp → Settings → Linked devices → Link a device**. WhatsApp issues a new code about every 20 seconds and the terminal redraws it; scan the newest one. When it connects, the view closes by itself:
 
 ```
 WhatsApp connected. Send .ping to the bot to check it answers.
 ```
 
-Ctrl-C only closes the view; the bot keeps running and waiting. Make the terminal at least 60 columns wide, or the code wraps and will not scan.
+If you closed the view before scanning, show it again with `./ctl.sh pair`. Make the terminal at least 60 columns wide, or the code wraps and will not scan.
 
-Confirm from WhatsApp:
+> The QR is a credential. Whoever scans it binds the bot to *their* account and takes your deployment over. That is why it appears only in the terminal of someone already logged in to the server, never on a web page.
 
+---
+
+## Update to the latest version
+
+```bash
+cd ~/phc-bot
+./ctl.sh update
 ```
-.ping
-```
 
-> The QR is a credential. Whoever scans it binds the bot to *their* account and takes your deployment over. That is why it is shown only in the terminal of someone already logged in to the server, and never on a web page.
+It pulls the latest code from GitHub, shows what changed, then runs the same steps as `start`. It rebuilds only if the code changed, and keeps your WhatsApp session, settings and database. Running the install one-liner again does the same thing.
 
 ---
 
 ## Day to day
 
+Run these in `~/phc-bot`.
+
 | Command | Does |
 |---|---|
+| `./ctl.sh start` | Everything above. Safe to run any time: it only changes what needs changing |
+| `./ctl.sh update` | Pull the latest version from GitHub, then start |
+| `./ctl.sh doctor` | Run every check and report, without changing anything |
 | `./ctl.sh status` | What is running, and whether WhatsApp is connected |
-| `./ctl.sh pair` | Show the QR code in the terminal (only needed when not paired) |
-| `./ctl.sh logs` | Follow the bot's log (Ctrl-C to stop following) |
-| `./ctl.sh restart` | Restart the bot. Picks up `.env` changes. Keeps the session. |
-| `./ctl.sh update` | Rebuild from source and restart. Keeps the session and data. |
-| `./ctl.sh backup` | Database dump + WhatsApp session into `backups/` |
+| `./ctl.sh logs` | Follow the bot's log (Ctrl-C stops following) |
+| `./ctl.sh setup` | Change the answers in `.env`; `start` then applies them |
+| `./ctl.sh pair` | Show the QR code (only needed when not paired) |
+| `./ctl.sh restart` | Restart the bot. Keeps the session |
+| `./ctl.sh backup` | Database dump and WhatsApp session into `backups/` |
+| `./ctl.sh autostart on` / `off` | Start by itself after a reboot, or not |
 | `./ctl.sh stop` | Stop the bot and the database |
 | `./ctl.sh reset-session` | Delete the session and pair again (shows the new QR) |
-| `./ctl.sh uninstall` | Remove containers, image and **database**. Keeps `data/auth`. |
-
-### Updating the code
-
-```bash
-# copy or pull the new code, then:
-./ctl.sh update
-```
+| `./ctl.sh uninstall` | Remove containers, image and **database**. Keeps `data/auth` |
 
 ### Where things live
 
 ```
-phc-platform/
-  .env                you edit this
+phc-bot/
+  .env                your settings (./ctl.sh setup edits it)
   data/auth/          the WhatsApp session — a credential
   backups/            ./ctl.sh backup output — also credentials
-  .runtime/           generated: DB password, container env, Docker (Option B)
+  .runtime/           generated: database password, the private Docker copy
 ```
 
-The database lives in the Docker volume `phc-pgdata`. With Option B that volume is itself inside `.runtime/data`, so the whole deployment is one folder.
+The database lives in the Docker volume `phc-pgdata`. With the private Docker copy, that volume is itself inside `.runtime`, so the whole deployment is one folder.
+
+### After a reboot
+
+With Docker installed system-wide, the bot comes back by itself. With the private copy, the first `start` asks whether to set that up; say yes, or later run `./ctl.sh autostart on`. It adds one small service file for your user. If the server needs an administrator to allow it to start before anyone logs in, it prints the one command to run.
 
 ---
 
@@ -186,18 +134,19 @@ The database lives in the Docker volume `phc-pgdata`. With Option B that volume 
 
 Two processes sharing a session each advance its encryption keys independently and destroy it within seconds. The symptom is deceptive: `/health` says connected, `.ping` does nothing, and the log fills with `Bad MAC` and `Session error`. Messages arrive; they just can't be decrypted. Recovery is `./ctl.sh reset-session` and pairing again.
 
-The platform defends against this in two layers:
+The platform defends against this in three layers:
 
-- the container has a fixed name, so Docker refuses to start a second one
-- the bot takes a lock on its session at startup, and a second instance exits immediately with an explanation instead of corrupting anything
+- the containers have fixed names, so Docker refuses to start a second copy;
+- `start` refuses when another copy of the bot already answers on its port;
+- the bot locks its session at startup, and a second instance exits at once with an explanation.
 
-What neither can see is **another machine** using a copy of the same session — your laptop still running `npm run dev` with a session you copied to the VPS, for instance. Stop the bot everywhere else before starting it here.
+What none of them can see is **another machine** using a copy of the same session. Never copy `data/auth` from a machine where the bot is still running. Moving to a new server? Pair it fresh, and once it works, stop the old one and unlink its device in WhatsApp.
 
 ---
 
 ## Making it public (optional)
 
-Search on the web page is the only part members need over the internet. The browser pairing page is off on a VPS (`PAIRING_PAGE=off`), so there is nothing there to find.
+The web search page is the only part members need over the internet. The browser pairing page is off on a VPS (`PAIRING_PAGE=off`), so there is nothing there to find.
 
 Put a reverse proxy with HTTPS in front, for example Caddy:
 
@@ -207,26 +156,26 @@ opportunities.your-domain.com {
 }
 ```
 
-Keep `PHC_BIND` at its default of `127.0.0.1` — the proxy reaches it locally, and nothing else can. Only set `PHC_BIND=0.0.0.0` if you understand that it exposes the port directly.
+Keep the bot listening on `127.0.0.1` (the default): the proxy reaches it locally, and nothing else can. `PHC_BIND=0.0.0.0 ./ctl.sh start` exposes the port directly; do that only if you understand why.
 
 ---
 
 ## Troubleshooting
 
-**`no working Docker found`** — install it (step 1).
+Start with `./ctl.sh doctor`: it runs every check and marks problems with ✗, with the fix next to each.
 
-**`.env not found`** — `cp .env.example .env` and fill it in.
+**An item is marked ✗ under Docker.** It is a one-time system setting only an administrator can change; the exact command is printed beside it. Alternatively, install Docker system-wide (above).
 
-**`WhatsApp: not paired` and it stays that way** — you have not scanned yet. Run `./ctl.sh pair`.
+**`Some settings in .env are not valid`.** The lines above it name the setting and the allowed values. Fix `.env`, or run `./ctl.sh setup`. The running bot is left as it was until the settings are valid.
 
-**`.ping` does nothing but status says connected** — almost always a session used by two processes. Check `./ctl.sh logs` for `Bad MAC`. Stop every other copy of the bot, then `./ctl.sh reset-session`.
+**`Port 3100 is used by another program`.** Stop that program, or run on another port: `PHC_PORT=3200 ./ctl.sh start`.
 
-**`Refusing to start ... already using this WhatsApp session`** — a second bot was started. That message is the protection working; stop the other one.
+**`Another copy of this bot is already running`.** Probably `npm start` or `npm run dev` in another folder. Stop it first; see [The one rule](#the-one-rule).
 
-**The first `start` is very slow** — it is downloading images and npm packages. Later starts reuse them.
+**`could not update from GitHub`.** Files in the folder were edited by hand. `git status` shows which; `git stash` sets the edits aside.
 
-**After a reboot nothing is running** — with Option B the rootless daemon does not start on boot. Run `./ctl.sh start`, or use Option A.
+**`.ping` does nothing but status says connected.** Almost always a session used by two processes. Check `./ctl.sh logs` for `Bad MAC`. Stop every other copy of the bot, then `./ctl.sh reset-session`.
 
-**`./ctl.sh pair` shows nothing for a while** — the bot is between codes or still starting. A code appears within about 20 seconds; if not, check `./ctl.sh logs`.
+**The QR will not scan.** The terminal is too narrow and the code wrapped. Widen the window (60+ columns) or zoom out; the next code redraws.
 
-**The QR will not scan** — the terminal is too narrow and the code wrapped. Widen the window (60+ columns) or zoom out; the next code redraws.
+**After a reboot nothing is running.** With the private Docker copy, run `./ctl.sh autostart on` once.

@@ -22,6 +22,7 @@
 #   ./ctl.sh reset-session    delete the WhatsApp session and pair again
 #   ./ctl.sh autostart on|off start the bot by itself after a reboot
 #   ./ctl.sh install-docker   fetch rootless Docker into .runtime (no sudo)
+#   ./ctl.sh use-system-docker  move the bot (with its data) onto this machine's Docker
 #   ./ctl.sh uninstall        remove containers, image and database volume
 #
 set -euo pipefail
@@ -115,18 +116,140 @@ local_docker_host() {
 	fi
 }
 
-resolve_docker() {
-	if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-		return 0 # a working system Docker; use it as-is
-	fi
+# Which Docker this bot uses — "own" (the copy in .runtime) or "system" — is
+# decided once and then kept. Switching on its own, because some other app
+# installed Docker later, would start a second bot with an empty database on
+# the same WhatsApp session, while the first keeps running.
+MODE_FILE="$RT/docker-mode"
+
+system_docker_works() { command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; }
+
+docker_mode() {
+	local mode=""
+	[ -f "$MODE_FILE" ] && mode="$(cat "$MODE_FILE" 2>/dev/null)"
+	case "$mode" in
+		own | system) echo "$mode"; return 0 ;;
+	esac
+	# Installs from before the choice was recorded: the bot's own copy, when
+	# there is one, is the one they have been using.
 	if [ -x "$RT/bin/dockerd" ]; then
-		LOCAL_DOCKER=1
-		export PATH="$RT/bin:$PATH"
-		DOCKER_HOST="$(local_docker_host)"
-		export DOCKER_HOST
+		echo own
+	elif system_docker_works; then
+		echo system
+	else
+		echo none
+	fi
+}
+
+record_docker_mode() {
+	mkdir -p "$RT"
+	printf '%s\n' "$1" >"$MODE_FILE"
+}
+
+resolve_docker() {
+	case "$(docker_mode)" in
+		own)
+			LOCAL_DOCKER=1
+			export PATH="$RT/bin:$PATH"
+			DOCKER_HOST="$(local_docker_host)"
+			export DOCKER_HOST
+			;;
+		system)
+			system_docker_works ||
+				die "this bot uses the Docker installed on this machine, which is not running or not usable by $(id -un).
+  Start it with:  systemctl start docker"
+			;;
+		*) die "Docker is not set up for the bot yet. Run:  ./ctl.sh start" ;;
+	esac
+}
+
+# Every other Docker on this machine that could be running a copy of the bot.
+other_docker_hosts() {
+	local mine="${DOCKER_HOST:-unix:///var/run/docker.sock}" host
+	for host in "unix:///var/run/docker.sock" "$(local_docker_host)"; do
+		[ "$host" = "$mine" ] && continue
+		[ -S "${host#unix://}" ] || continue
+		echo "$host"
+	done
+}
+
+# Containers in another Docker that use this bot's WhatsApp session, as
+# "host<TAB>id<TAB>name" lines.
+copies_elsewhere() {
+	local host id sources
+	for host in $(other_docker_hosts); do
+		for id in $(DOCKER_HOST="$host" docker ps -q 2>/dev/null); do
+			sources="$(DOCKER_HOST="$host" docker inspect -f '{{range .Mounts}}{{.Source}}{{"\n"}}{{end}}' "$id" 2>/dev/null || true)"
+			if grep -qxF "$DATA/auth" <<<"$sources"; then
+				printf '%s\t%s\t%s\n' "$host" "$id" \
+					"$(DOCKER_HOST="$host" docker inspect -f '{{.Name}}' "$id" 2>/dev/null | sed 's#^/##')"
+			fi
+		done
+	done
+}
+
+# Two copies on one WhatsApp session destroy it, so a copy in another Docker
+# is stopped, and kept from restarting by itself.
+stop_other_copies() {
+	local host id name found=0
+	while IFS=$'\t' read -r host id name; do
+		[ -n "$id" ] || continue
+		found=1
+		note "Stopping a second copy of the bot ($name, in another Docker on this machine)"
+		DOCKER_HOST="$host" docker update --restart=no "$id" >/dev/null 2>&1 || true
+		DOCKER_HOST="$host" docker stop -t 20 "$id" >/dev/null 2>&1 || true
+	done < <(copies_elsewhere)
+	if [ "$found" = 0 ]; then ok "No other copy of the bot is running on this machine"; fi
+	return 0
+}
+
+stop_own_daemon() {
+	if is_root; then
+		systemctl stop "$UNIT" >/dev/null 2>&1 ||
+			kill "$(cat "$ROOT_RUN/docker.pid" 2>/dev/null)" 2>/dev/null || true
+	else
+		systemctl --user stop "$UNIT" >/dev/null 2>&1 ||
+			kill "$(cat "$RT/dockerd.pid" 2>/dev/null)" 2>/dev/null || true
+	fi
+}
+
+# Move from the bot's own Docker copy onto the Docker installed on this
+# machine: one daemon instead of two. The session and settings are files in
+# this folder and stay put; the database is copied across.
+cmd_use_system_docker() {
+	if [ "$(docker_mode)" = system ]; then
+		say "The bot already uses the Docker installed on this machine."
 		return 0
 	fi
-	die "no working Docker found. Run:  ./ctl.sh start   (it fetches a private copy)"
+	if ! (unset DOCKER_HOST; system_docker_works); then
+		die "no working Docker is installed on this machine, so there is nothing to move to."
+	fi
+
+	say "Moving the bot onto the Docker installed on this machine."
+	say "Its WhatsApp session and settings stay where they are; the database is copied."
+	resolve_docker
+	daemon_start
+	if exists "$DB"; then
+		running "$DB" || docker start "$DB" >/dev/null
+		wait_for_db || die "the bot's database did not start, so it cannot be copied (./ctl.sh logs-db)."
+		docker exec "$DB" pg_dump -U phc -d phc --no-owner >"$RT/move.sql"
+		chmod 600 "$RT/move.sql"
+		ok "Database saved for the move"
+	fi
+	local c
+	for c in "$APP" "$DB"; do
+		if exists "$c"; then
+			docker update --restart=no "$c" >/dev/null 2>&1 || true
+			docker stop -t 20 "$c" >/dev/null 2>&1 || true
+		fi
+	done
+	stop_own_daemon
+	ok "The bot's own Docker copy is stopped (its files stay in .runtime)"
+
+	record_docker_mode system
+	unset DOCKER_HOST
+	say ""
+	exec "$ROOT/ctl.sh" start
 }
 
 daemon_up() { docker info >/dev/null 2>&1; }
@@ -157,6 +280,7 @@ daemon_start() {
 			"${cmd[@]}"
 	else
 		PATH="$RT/bin:$PATH" setsid nohup "${cmd[@]}" >"$RT/dockerd.log" 2>&1 &
+		echo $! >"$RT/dockerd.pid"
 	fi
 	for _ in $(seq 1 60); do
 		daemon_up && return 0
@@ -421,7 +545,9 @@ check_port() {
 	if curl -s -m 3 "http://127.0.0.1:$PHC_PORT/health" 2>/dev/null | grep -q '"whatsapp"'; then
 		problem "Another copy of this bot is already running on port $PHC_PORT (npm start, or a second folder?). Stop it first."
 	else
-		problem "Port $PHC_PORT is used by another program. Stop it, or pick another port:  PHC_PORT=3200 ./ctl.sh start"
+		local who
+		who="$(ss -ltnpH "sport = :$PHC_PORT" 2>/dev/null | grep -o 'users:(("[^"]*"' | head -1 | sed 's/users:(("//')"
+		problem "Port $PHC_PORT is used by another program${who:+ ($who)}. Stop it, or use another port:  PHC_PORT=3200 ./ctl.sh start"
 	fi
 	return 1
 }
@@ -465,11 +591,21 @@ install_local_docker() {
 # A working Docker, by whatever route: the system's if it works, otherwise the
 # bot's own copy in .runtime, downloaded on first use.
 ensure_docker() {
-	if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+	local mode
+	mode="$(docker_mode)"
+	if [ "$mode" = none ]; then
+		if system_docker_works; then mode=system; else mode=own; fi
+	fi
+	if [ "$mode" = system ]; then
+		record_docker_mode system
+		resolve_docker
 		ok "Docker $(docker version -f '{{.Server.Version}}' 2>/dev/null) (installed on this machine)"
 		return 0
 	fi
-	if command -v docker >/dev/null 2>&1 && [ ! -x "$RT/bin/dockerd" ]; then
+	if system_docker_works; then
+		note "Another Docker is also running on this machine (installed by another app?). The bot keeps"
+		note "using its own copy, with its data. If its networking ever breaks:  ./ctl.sh use-system-docker"
+	elif command -v docker >/dev/null 2>&1 && [ ! -x "$RT/bin/dockerd" ]; then
 		note "Docker is installed here but $(id -un) cannot use it (stopped, or not in the docker group)."
 		note "Using the bot's own copy in this folder instead."
 	fi
@@ -494,6 +630,7 @@ ensure_docker() {
 	if [ ! -x "$RT/bin/dockerd" ] || { ! is_root && [ ! -x "$RT/bin/dockerd-rootless.sh" ]; }; then
 		install_local_docker
 	fi
+	record_docker_mode own
 	resolve_docker
 	daemon_start
 	if is_root; then
@@ -835,6 +972,15 @@ start_db() {
 		docker exec -i "$DB" psql -U phc -d phc -v ON_ERROR_STOP=1 -q <"$ROOT/drizzle/schema.sql" >/dev/null
 		ok "Database schema created"
 	fi
+	if [ -f "$RT/move.sql" ]; then
+		note "Copying the database over from the bot's previous Docker"
+		if exists "$APP"; then docker stop -t 20 "$APP" >/dev/null 2>&1 || true; fi
+		docker exec "$DB" psql -U phc -d postgres -v ON_ERROR_STOP=1 -q \
+			-c 'DROP DATABASE IF EXISTS phc WITH (FORCE)' -c 'CREATE DATABASE phc OWNER phc' >/dev/null
+		docker exec -i "$DB" psql -U phc -d phc -v ON_ERROR_STOP=1 -q <"$RT/move.sql" >/dev/null
+		mv "$RT/move.sql" "$RT/move.sql.done"
+		ok "Database copied"
+	fi
 	ok "Database ready"
 }
 
@@ -892,6 +1038,7 @@ cmd_start() {
 
 	step "Docker"
 	ensure_docker
+	stop_other_copies
 	check_port || die "port $PHC_PORT is taken (see above)."
 
 	step "Configuration"
@@ -915,6 +1062,84 @@ cmd_start() {
 }
 
 # Every check start makes, and a few more, without changing anything.
+# Why the bot might not answer: is it running, did it crash or run out of
+# memory, is WhatsApp connected, can it reach the internet, and what its log
+# says about the last hour.
+check_bot_health() {
+	local failed=0
+	if ! exists "$APP"; then
+		problem "The bot has not been created; ./ctl.sh start creates it"
+		return 1
+	fi
+	local state restarts oom code health
+	state="$(docker inspect -f '{{.State.Status}}' "$APP")"
+	restarts="$(docker inspect -f '{{.RestartCount}}' "$APP")"
+	oom="$(docker inspect -f '{{.State.OOMKilled}}' "$APP")"
+	code="$(docker inspect -f '{{.State.ExitCode}}' "$APP")"
+	health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "$APP")"
+
+	if [ "$state" = running ]; then
+		ok "The bot is running${health:+ ($health)}"
+	else
+		problem "The bot is not running ($state, exit code $code). ./ctl.sh start starts it; ./ctl.sh logs shows why it stopped"
+		failed=1
+	fi
+	if [ "$oom" = true ]; then
+		problem "The bot was killed for lack of memory: other programs on this server use most of it"
+		failed=1
+	fi
+	if [ "$restarts" -gt 3 ]; then
+		problem "The bot has restarted $restarts times; ./ctl.sh logs shows why"
+		failed=1
+	fi
+	local avail_kb
+	avail_kb="$(awk '/^MemAvailable/ { print $2 }' /proc/meminfo 2>/dev/null || echo 0)"
+	if [ "$avail_kb" -gt 0 ] && [ "$avail_kb" -lt 200000 ]; then
+		problem "Only $((avail_kb / 1024)) MB of memory is free on this server; other programs are using the rest"
+		failed=1
+	fi
+
+	if running "$APP"; then
+		case "$(wa_state_code)" in
+			0) ok "WhatsApp is connected" ;;
+			1) problem "WhatsApp is not paired; ./ctl.sh pair shows the QR code"; failed=1 ;;
+			*) note "WhatsApp: still connecting" ;;
+		esac
+		if docker exec "$APP" node -e "fetch('https://web.whatsapp.com',{method:'HEAD',signal:AbortSignal.timeout(10000)}).then(()=>process.exit(0),()=>process.exit(1))" >/dev/null 2>&1; then
+			ok "The bot can reach WhatsApp's servers"
+		else
+			problem "The bot cannot reach the internet from its container. Something changed this server's"
+			warn "      networking (often a second Docker or a firewall). Try ./ctl.sh restart; if it stays, ./ctl.sh use-system-docker"
+			failed=1
+		fi
+	fi
+
+	local log decrypt locked gave_up
+	log="$(docker logs --since 60m "$APP" 2>&1 || true)"
+	decrypt="$(grep -c 'failed to decrypt' <<<"$log" || true)"
+	locked="$(grep -c 'already using this WhatsApp session' <<<"$log" || true)"
+	gave_up="$(grep -c 'logged out repeatedly' <<<"$log" || true)"
+	if [ "$locked" -gt 0 ]; then
+		problem "Another copy of the bot holds the WhatsApp session, so this one will not start."
+		warn "      ./ctl.sh start stops copies on this machine; stop any copy on another machine (your laptop?)"
+		failed=1
+	fi
+	if [ "$gave_up" -gt 0 ]; then
+		problem "WhatsApp kept logging the bot out; ./ctl.sh reset-session and scan the QR again"
+		failed=1
+	fi
+	if [ "$decrypt" -gt 20 ]; then
+		problem "$decrypt messages could not be decrypted in the last hour: the session is damaged,"
+		warn "      usually by two copies of the bot running at once. Stop other copies, then ./ctl.sh reset-session"
+		failed=1
+	elif [ "$decrypt" -gt 0 ]; then
+		note "$decrypt messages could not be decrypted in the last hour (a few right after a restart is normal)"
+	else
+		ok "No decryption errors in the last hour"
+	fi
+	return "$failed"
+}
+
 cmd_doctor() {
 	STEPS=4
 	local failed=0
@@ -924,9 +1149,19 @@ cmd_doctor() {
 	check_machine || failed=1
 
 	step "Docker"
-	if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-		ok "Docker $(docker version -f '{{.Server.Version}}' 2>/dev/null) (installed on this machine)"
+	local mode
+	mode="$(docker_mode)"
+	if [ "$mode" = system ]; then
+		if system_docker_works; then
+			ok "Docker $(docker version -f '{{.Server.Version}}' 2>/dev/null) (installed on this machine)"
+		else
+			problem "The bot uses this machine's Docker, which is not running:  systemctl start docker"
+			failed=1
+		fi
 	else
+		if system_docker_works && [ "$mode" = own ]; then
+			note "Another Docker is also running on this machine; the bot keeps using its own copy."
+		fi
 		if is_root; then
 			if command -v iptables >/dev/null 2>&1; then ok "iptables present"; else note "iptables missing; ./ctl.sh start installs it"; fi
 		else
@@ -934,9 +1169,19 @@ cmd_doctor() {
 		fi
 		if [ -x "$RT/bin/dockerd" ]; then
 			resolve_docker
-			if daemon_up; then ok "Private Docker copy is running"; else note "Private Docker copy installed; ./ctl.sh start starts it"; fi
+			if daemon_up; then ok "The bot's own Docker copy is running"; else problem "The bot's own Docker copy is not running; ./ctl.sh start starts it"; failed=1; fi
 		else
-			note "No Docker yet; ./ctl.sh start downloads a private copy into .runtime"
+			note "No Docker yet; ./ctl.sh start downloads one into .runtime"
+		fi
+	fi
+	if [ "$mode" != none ] && daemon_up 2>/dev/null; then
+		local copies
+		copies="$(copies_elsewhere | cut -f3 | tr '\n' ' ')"
+		if [ -n "${copies// /}" ]; then
+			problem "A second copy of the bot is running in another Docker on this machine ($copies). Two copies break the WhatsApp session; ./ctl.sh start stops it."
+			failed=1
+		else
+			ok "No second copy of the bot on this machine"
 		fi
 	fi
 	local docker_ok=0
@@ -972,7 +1217,7 @@ cmd_doctor() {
 		else
 			note "Bot image is older than the code (or not built); ./ctl.sh start rebuilds it"
 		fi
-		cmd_status | sed 's/^/  /'
+		check_bot_health || failed=1
 	fi
 	if [ "$LOCAL_DOCKER" = 1 ]; then
 		if autostart_enabled; then ok "Starts by itself after a reboot"; else note "Does not start after a reboot; ./ctl.sh autostart on"; fi
@@ -1242,6 +1487,7 @@ case "${1:-}" in
 	doctor)         cmd_doctor ;;
 	setup)          cmd_setup ;;
 	autostart)      cmd_autostart "${2:-}" ;;
+	use-system-docker) cmd_use_system_docker ;;
 	stop)           cmd_stop ;;
 	restart)        cmd_restart ;;
 	status)         cmd_status ;;

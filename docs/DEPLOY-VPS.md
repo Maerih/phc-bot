@@ -181,4 +181,6 @@ Start with `./ctl.sh doctor`: it runs every check and marks problems with ✗, w
 
 **The QR will not scan.** The terminal is too narrow and the code wrapped. Widen the window (60+ columns) or zoom out; the next code redraws.
 
+**The bot stopped answering after you installed other software.** Run `./ctl.sh update`, then `./ctl.sh doctor`. Other apps often install Docker system-wide; the bot keeps using the Docker it was set up with, so its database and settings stay where they are. `start` stops any second copy of the bot it finds in another Docker, and `doctor` says whether the bot is running, whether WhatsApp is connected, whether the bot can reach the internet, and whether messages are failing to decrypt. If the bot cannot reach the internet because two Docker daemons now share the machine, `./ctl.sh use-system-docker` moves it onto the system one, copying the database across; the WhatsApp session and `.env` are not touched.
+
 **After a reboot nothing is running.** With the private Docker copy, run `./ctl.sh autostart on` once.

@@ -757,22 +757,30 @@ check_deepseek_key() {
 # What is switched on, so nobody wonders why .ask says the assistant is off.
 report_features() {
 	local provider key
+	# Same order as the bot: the named provider first, then DeepSeek, Gemini,
+	# Anthropic — the first with a key answers .ask and AI search.
 	provider="$(env_value AI_PROVIDER)"
-	provider="${provider:-gemini}"
-	case "$provider" in
-		none) note "AI assistant: off (AI_PROVIDER=none)" ;;
-		gemini | anthropic | openai)
-			key="$(env_value "${provider^^}_API_KEY")"
-			if [ -z "$key" ]; then
-				note "AI assistant: off — no ${provider^^}_API_KEY. A free Gemini key: https://aistudio.google.com/apikey, then ./ctl.sh setup"
-			elif [ "$provider" = gemini ]; then
-				check_gemini_key "$key"
-			else
-				ok "AI assistant: $provider"
-			fi
-			;;
-		*) problem "AI_PROVIDER=$provider is not one of: gemini, anthropic, openai, none" ;;
-	esac
+	provider="${provider:-auto}"
+	local chosen="" candidate
+	if [ "$provider" = none ]; then
+		note "AI assistant: off (AI_PROVIDER=none)"
+	else
+		case "$provider" in
+			auto | deepseek | gemini | anthropic | openai) ;;
+			*) problem "AI_PROVIDER=$provider is not one of: auto, deepseek, gemini, anthropic, none" ;;
+		esac
+		for candidate in "$provider" deepseek gemini anthropic; do
+			case "$candidate" in deepseek | gemini | anthropic) ;; *) continue ;; esac
+			if [ -n "$(env_value "${candidate^^}_API_KEY")" ]; then chosen="$candidate"; break; fi
+		done
+		if [ -z "$chosen" ]; then
+			note "AI assistant and AI search: off — add a DeepSeek key with ./ctl.sh setup"
+		elif [ "$chosen" = gemini ]; then
+			check_gemini_key "$(env_value GEMINI_API_KEY)"
+		else
+			ok "AI assistant and AI search: $chosen"
+		fi
+	fi
 	key="$(env_value DEEPSEEK_API_KEY)"
 	if [ -n "$key" ]; then
 		check_deepseek_key "$key"

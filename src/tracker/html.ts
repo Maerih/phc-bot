@@ -122,7 +122,7 @@ export function tidyRowTitle(text: string): string {
 const BUTTON_WORDS = /\b(view( job)?( details)?|apply( now)?|details|read more|more info|download)\b/gi;
 
 /** Links on a listing page that look like individual opportunities. */
-export function listingCandidates(html: string, pageUrl: string, max = 80): PageLink[] {
+export function listingCandidates(html: string, pageUrl: string, max = 200): PageLink[] {
   const pagePath = new URL(pageUrl).pathname.replace(/\/$/, '');
   return extractLinks(html, pageUrl)
     .map((link) => {

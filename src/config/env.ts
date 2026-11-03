@@ -64,7 +64,7 @@ const schema = z.object({
   // Gemini is the default: Google AI Studio issues a free key with a usable
   // free tier and built-in search grounding, so the AI features work without
   // a billing account. The others stay available for later.
-  AI_PROVIDER: z.enum(['gemini', 'anthropic', 'openai', 'deepseek', 'none']).default('gemini'),
+  AI_PROVIDER: z.enum(['auto', 'gemini', 'anthropic', 'openai', 'deepseek', 'none']).default('auto'),
   GEMINI_API_KEY: z.string().default(''),
   GEMINI_MODEL: z.string().default('gemini-3.8-flash'),
   ANTHROPIC_API_KEY: z.string().default(''),
@@ -122,6 +122,9 @@ export type Env = typeof env;
 
 /** True when an AI provider is both selected and actually credentialed. */
 export function isAiConfigured(): boolean {
+  if (env.AI_PROVIDER === 'none') return false;
+  // Any key will do: the router falls back to whichever provider has one.
+  if ([env.DEEPSEEK_API_KEY, env.GEMINI_API_KEY, env.ANTHROPIC_API_KEY].some((key) => key.trim().length > 0)) return true;
   if (env.AI_PROVIDER === 'gemini') return env.GEMINI_API_KEY.length > 0;
   if (env.AI_PROVIDER === 'anthropic') return env.ANTHROPIC_API_KEY.length > 0;
   if (env.AI_PROVIDER === 'openai') return env.OPENAI_API_KEY.length > 0;

@@ -48,11 +48,11 @@ describe('prompts', () => {
   it('forbids individual medical advice', () => {
     // A public-health community will attract clinical questions; the boundary
     // has to be in the prompt, not left to chance.
-    expect(ASK_SYSTEM_PROMPT).toMatch(/do not give individual medical advice/i);
+    expect(ASK_SYSTEM_PROMPT).toMatch(/general information only[\s\S]*qualified clinician/i);
   });
 
   it('forbids inventing opportunities', () => {
-    expect(ASK_SYSTEM_PROMPT).toMatch(/do not invent opportunities/i);
+    expect(ASK_SYSTEM_PROMPT).toMatch(/never invent a job, scholarship, deadline, organisation or link/i);
   });
 
   it('tells the model to treat user text as data, not instructions', () => {

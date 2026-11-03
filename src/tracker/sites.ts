@@ -68,6 +68,21 @@ export const TRACKED_SITES: readonly TrackedSite[] = [
   site('jobwebkenya', 'JobWeb Kenya', 'https://www.jobwebkenya.com/'),
   site('jobsinkenya', 'Jobs in Kenya', 'https://www.jobsinkenya.co.ke/'),
 
+  // ── Public-health searches on Kenyan boards ──
+  // Listings that never reach a board's front page, found by searching it
+  // for each public-health field.
+  site('jw-public-health', 'JobWeb Kenya: public health', 'https://www.jobwebkenya.com/?s=public+health', { health: true }),
+  site('jw-community-health', 'JobWeb Kenya: community health', 'https://www.jobwebkenya.com/?s=community+health', { health: true }),
+  site('jw-health-records', 'JobWeb Kenya: health records', 'https://www.jobwebkenya.com/?s=health+records', { health: true }),
+  site('jw-environmental-health', 'JobWeb Kenya: environmental health', 'https://www.jobwebkenya.com/?s=environmental+health', { health: true }),
+  site('jw-occupational-health', 'JobWeb Kenya: occupational health', 'https://www.jobwebkenya.com/?s=occupational+health', { health: true }),
+  site('jw-epidemiology', 'JobWeb Kenya: epidemiology', 'https://www.jobwebkenya.com/?s=epidemiology', { health: true }),
+  site('jw-nutrition', 'JobWeb Kenya: nutrition', 'https://www.jobwebkenya.com/?s=nutrition', { health: true }),
+  site('jw-health-me', 'JobWeb Kenya: health M&E', 'https://www.jobwebkenya.com/?s=monitoring+evaluation+health', { health: true }),
+  site('jw-population-health', 'JobWeb Kenya: population health', 'https://www.jobwebkenya.com/?s=population+health', { health: true }),
+  site('jw-wash', 'JobWeb Kenya: WASH', 'https://www.jobwebkenya.com/?s=water+sanitation+hygiene', { health: true }),
+  site('ofyk-health', 'Opportunities for Young Kenyans: health', 'https://opportunitiesforyoungkenyans.co.ke/?s=health', { health: true }),
+
   // ── Government ──
   site('psc', 'Public Service Commission', 'https://psckjobs.go.ke/', { employer: true }),
   site('gaa', 'Government Advertising Agency', 'https://gaa.go.ke/job-adverts', { employer: true }),
@@ -79,6 +94,8 @@ export const TRACKED_SITES: readonly TrackedSite[] = [
   site('knh', 'Kenyatta National Hospital', 'https://knh.or.ke/', { health: true, employer: true }),
   site('mtrh', 'Moi Teaching and Referral Hospital', 'https://www.mtrh.go.ke/', { health: true, employer: true }),
   site('cpsb-transnzoia', 'Trans Nzoia County Public Service Board', 'https://www.cpsbtransnzoia.co.ke/vacancies', { employer: true }),
+  site('cpsb-kiambu', 'Kiambu County Public Service Board', 'https://kiambu.go.ke/cpsb/', { employer: true }),
+  site('maseno', 'Maseno University', 'https://www.maseno.ac.ke/vacancies', { employer: true }),
 
   // ── Health research, NGOs and programmes in Kenya ──
   site('kemri-wellcome', 'KEMRI-Wellcome Trust', 'https://kemri-wellcome.org/careers/', { health: true, employer: true }),
@@ -89,6 +106,13 @@ export const TRACKED_SITES: readonly TrackedSite[] = [
   site('livinggoods', 'Living Goods', 'https://livinggoods.org/careers/', { health: true, employer: true }),
   site('path', 'PATH', 'https://www.path.org/careers/', { health: true, kenya: false, employer: true }),
   site('africacdc', 'Africa CDC', 'https://africacdc.org/opportunities/', { health: true, kenya: false, employer: true }),
+  site('pskenya', 'Population Services Kenya', 'https://pskenya.org/careers/', { health: true, employer: true }),
+  site('mariestopes', 'Marie Stopes Kenya', 'https://mariestopes.or.ke/careers/', { health: true, employer: true }),
+  site('aku', 'Aga Khan University', 'https://www.aku.edu/careers/Pages/home.aspx', { health: true, employer: true }),
+  site('cmmb', 'CMMB', 'https://cmmb.org/careers/', { health: true, kenya: false, employer: true }),
+  site('savethechildren-ke', 'Save the Children Kenya', 'https://kenya.savethechildren.net/careers', { employer: true }),
+  site('kndi', 'Kenya Nutritionists and Dieticians Institute', 'https://kndi.institute/careers/', { health: true, employer: true }),
+  site('healthsystemsglobal', 'Health Systems Global', 'https://www.healthsystemsglobal.org/', { health: true, kenya: false, type: 'PROGRAM' }),
 
   // ── NGO, UN and development ──
   site('impactpool', 'Impactpool', 'https://www.impactpool.org/countries/Kenya'),

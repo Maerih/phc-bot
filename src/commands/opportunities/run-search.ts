@@ -20,6 +20,10 @@ export interface RunSearchOptions {
   forcedTypes?: OpportunityType[];
   /** Label used in pagination hints and the command log. */
   commandLabel: string;
+  /** Search this text instead of the command's arguments (e.g. a cleaned-up .ask question). */
+  text?: string;
+  /** Force the AI web search to run alongside the sources. */
+  aiAugment?: boolean;
 }
 
 /**
@@ -31,7 +35,7 @@ export interface RunSearchOptions {
 export async function runSearch(context: CommandContext, options: RunSearchOptions): Promise<void> {
   const startedAt = Date.now();
 
-  const query = parseQuery(context.args, {
+  const query = parseQuery(options.text ?? context.args, {
     ...(options.forcedTypes ? { forcedTypes: options.forcedTypes } : {}),
     limit: DEFAULT_PAGE_SIZE,
     offset: 0,
@@ -45,8 +49,14 @@ export async function runSearch(context: CommandContext, options: RunSearchOptio
     // front; an unused reservation simply expires with the window.
     const allowAiFallback = isAiAvailable() && consumeAiQuota(context.member.id).allowed;
 
+    // Scholarships, internships, fellowships, research, grants, events,
+    // conferences and training live largely on the open web, so for those
+    // commands the AI web search runs every time alongside the sources.
+    const aiAugment = options.aiAugment ?? (options.forcedTypes ?? []).some((type) => type !== 'JOB');
+
     const outcome = await search(query, {
       allowAiFallback,
+      aiAugment,
       member: {
         country: context.member.country,
         interests: context.member.interests,

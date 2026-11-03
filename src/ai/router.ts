@@ -17,57 +17,53 @@ const log = logger.child({ component: 'ai:router' });
 
 let cached: AiProvider | null | undefined;
 
+type ProviderName = 'gemini' | 'anthropic' | 'deepseek';
+
+const FACTORIES: Record<ProviderName, () => AiProvider> = {
+  deepseek: createDeepSeekProvider,
+  gemini: createGeminiProvider,
+  anthropic: createAnthropicProvider,
+};
+
+/**
+ * Which providers to try, in order. "auto" (the default) prefers DeepSeek,
+ * then Gemini, then Anthropic — whichever has a key. A named provider is tried
+ * first, and if it has no key the others are tried rather than switching AI
+ * off: a server set up with AI_PROVIDER=gemini but only a DeepSeek key still
+ * has an assistant.
+ */
+function candidates(): ProviderName[] {
+  const order: ProviderName[] = ['deepseek', 'gemini', 'anthropic'];
+  const chosen = env.AI_PROVIDER;
+  if (chosen === 'gemini' || chosen === 'anthropic' || chosen === 'deepseek') {
+    return [chosen, ...order.filter((name) => name !== chosen)];
+  }
+  return order;
+}
+
 /** The active provider, or null when AI is unavailable. */
 export function getAiProvider(): AiProvider | null {
   if (cached !== undefined) return cached;
-
-  switch (env.AI_PROVIDER) {
-    case 'gemini':
-      try {
-        cached = createGeminiProvider();
-        log.info({ provider: 'gemini', model: cached.model }, 'AI provider ready');
-      } catch (cause) {
-        const reason = cause instanceof AiError ? cause.message : String(cause);
-        log.warn({ reason }, 'AI provider not available — AI features stay disabled');
-        cached = null;
-      }
-      break;
-
-    case 'anthropic':
-      try {
-        cached = createAnthropicProvider();
-        log.info({ provider: 'anthropic', model: cached.model }, 'AI provider ready');
-      } catch (cause) {
-        const reason = cause instanceof AiError ? cause.message : String(cause);
-        log.warn({ reason }, 'AI provider not available — AI features stay disabled');
-        cached = null;
-      }
-      break;
-
-    case 'deepseek':
-      try {
-        cached = createDeepSeekProvider();
-        log.info({ provider: 'deepseek', model: cached.model }, 'AI provider ready');
-      } catch (cause) {
-        const reason = cause instanceof AiError ? cause.message : String(cause);
-        log.warn({ reason }, 'AI provider not available — AI features stay disabled');
-        cached = null;
-      }
-      break;
-
-    case 'openai':
-      // Phase 6. Named explicitly so a misconfiguration is obvious in the log
-      // rather than looking like a missing key.
-      log.warn('AI_PROVIDER=openai is not implemented yet — AI features stay disabled');
-      cached = null;
-      break;
-
-    case 'none':
-    default:
-      cached = null;
-      break;
+  cached = null;
+  if (env.AI_PROVIDER === 'none') return cached;
+  if (env.AI_PROVIDER === 'openai') {
+    // Not implemented. Named explicitly so a misconfiguration is obvious in
+    // the log rather than looking like a missing key; other providers are
+    // still tried below.
+    log.warn('AI_PROVIDER=openai is not implemented yet — trying the other providers');
   }
 
+  for (const name of candidates()) {
+    try {
+      cached = FACTORIES[name]();
+      log.info({ provider: name, model: cached.model }, 'AI provider ready');
+      return cached;
+    } catch (cause) {
+      const reason = cause instanceof AiError ? cause.message : String(cause);
+      log.debug({ provider: name, reason }, 'AI provider not available');
+    }
+  }
+  log.warn('no AI provider has a key — AI features stay disabled');
   return cached;
 }
 

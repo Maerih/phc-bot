@@ -17,6 +17,7 @@ import { normalizeMany, safeUrl, type NormalizedOpportunity } from '../domain/no
 import type { OpportunityType, RawOpportunity } from '../domain/opportunity.js';
 import { OPPORTUNITY_TYPES } from '../domain/opportunity.js';
 import { getAiProvider } from '../ai/router.js';
+import { TtlCache } from '../core/cache.js';
 import { AiError } from '../ai/provider.js';
 import { getWebSearchProvider, usesProviderGrounding } from './web/router.js';
 import { renderSearchContext, WebSearchError } from './web/provider.js';
@@ -66,7 +67,7 @@ Return at most ${MAX_RESULTS} entries. An empty array is a correct answer when n
  * is a much narrower job, and a much easier one to keep honest — every URL it
  * reports can be checked against the list it was handed.
  */
-const EXTRACT_SYSTEM_PROMPT = `You extract real opportunities from web search results for a public-health community.
+const EXTRACT_SYSTEM_PROMPT = `You extract real opportunities from web search results for a Kenyan public-health community (community health, health records and information, population health, environmental and occupational health, epidemiology, nutrition, WASH, health promotion, global health and related fields).
 
 You will be given numbered search results. Use ONLY those results.
 
@@ -77,6 +78,7 @@ Rules:
 - Skip anything whose deadline has clearly passed.
 - Do not include a deadline unless the result states one. Omit it rather than guess.
 - If none of the results is a real, current opportunity, return an empty array.
+- Prefer opportunities open to Kenyans: in Kenya or East Africa, Africa-wide, remote, or international scholarships and fellowships Kenyans can apply for.
 
 ${'Reply with ONLY a JSON array, no prose and no code fence. Each element:'}
 {
@@ -103,6 +105,10 @@ export function buildSearchString(query: SearchQuery): string {
   parts.push(typeWords);
   if (query.locationTerms.length > 0) parts.push(query.locationTerms.join(' '));
   else if (query.region === 'africa') parts.push('Africa');
+  // No place named: jobs and internships are wanted in Kenya; scholarships,
+  // fellowships and grants are wanted wherever Kenyans can apply.
+  else if (query.types.length === 0 || query.types.some((type) => type === 'JOB' || type === 'INTERNSHIP')) parts.push('Kenya');
+  else parts.push('Kenyan OR African applicants');
   if (query.remoteOnly) parts.push('remote');
   parts.push('apply deadline');
   return parts.join(' ');
@@ -229,7 +235,19 @@ export interface AiFallbackResult {
  * Never throws: a failed fallback must leave the member with the ordinary
  * "no results" reply, not an error.
  */
+/** Same search within half an hour: same answer, no second bill. */
+const fallbackCache = new TtlCache<AiFallbackResult>(30 * 60_000, 300);
+
 export async function aiWebFallback(query: SearchQuery, now = new Date()): Promise<AiFallbackResult> {
+  const key = `${buildSearchString(query)}|${query.types.join(',')}|${query.postedWithinDays ?? ''}`.toLowerCase();
+  const cached = fallbackCache.get(key);
+  if (cached) return cached;
+  const result = await aiWebFallbackUncached(query, now);
+  if (result.opportunities.length > 0) fallbackCache.set(key, result);
+  return result;
+}
+
+async function aiWebFallbackUncached(query: SearchQuery, now: Date): Promise<AiFallbackResult> {
   const provider = getAiProvider();
 
   if (!provider) {

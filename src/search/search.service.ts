@@ -26,6 +26,12 @@ export interface SearchOptions {
    * and is responsible for any per-member quota.
    */
   allowAiFallback?: boolean;
+  /**
+   * Run the AI web search alongside the sources every time, not only when
+   * they find nothing, and merge the two. For the opportunity-type commands,
+   * where the open web carries much of what members want.
+   */
+  aiAugment?: boolean;
   /** Persist discovered opportunities. Disable for dry runs and tests. */
   persist?: boolean;
   now?: Date;
@@ -59,6 +65,8 @@ export async function search(query: SearchQuery, options: SearchOptions = {}): P
   const now = options.now ?? new Date();
   const trustBySlug = trustMap();
 
+  // The AI web search, when wanted, runs at the same time as the sources.
+  const augment = options.aiAugment === true && options.allowAiFallback === true ? aiWebFallback(query, now) : null;
   const { opportunities: fetched, results: sourceResults } = await fanOut(query);
 
   const filtered = applyFilters(fetched, query, now);
@@ -87,12 +95,29 @@ export async function search(query: SearchQuery, options: SearchOptions = {}): P
   let finalRanked = ranked;
   let aiAssisted = false;
 
+  if (augment) {
+    const extra = await augment;
+    if (extra.opportunities.length > 0) {
+      const extraRanked = rank(
+        dedupe(applyFilters(extra.opportunities, query, now, { treatUnknownAsMatch: true }), { trustBySlug }).unique,
+        { query, ...(options.member ? { member: options.member } : {}), trustBySlug, now, minRelevance: 0 },
+      );
+      // Merge, dropping AI finds that repeat a source listing (same link or
+      // same title from the same organisation), and order by score.
+      const seen = new Set(ranked.flatMap((item) => [linkKey(item), titleKey(item)]));
+      const added = extraRanked.filter((item) => !seen.has(linkKey(item)) && !seen.has(titleKey(item)));
+      finalRanked = [...ranked, ...added].sort((a, b) => b.score - a.score);
+      aiAssisted = added.length > 0;
+      log.info({ sources: ranked.length, aiAdded: added.length }, 'search augmented with AI web results');
+    }
+  }
+
   /**
    * Nothing from the configured sources. Rather than reporting that no such
    * opportunity exists — which is a much stronger claim than "our four
    * connectors do not carry it" — ask the AI provider to search the live web.
    */
-  if (ranked.length === 0 && options.allowAiFallback === true) {
+  if (finalRanked.length === 0 && !augment && options.allowAiFallback === true) {
     const fallback = await aiWebFallback(query, now);
     if (fallback.opportunities.length > 0) {
       // Lenient: fallback results are already targeted by the search string,
@@ -133,6 +158,14 @@ export async function search(query: SearchQuery, options: SearchOptions = {}): P
     aiAssisted,
     durationMs: Date.now() - startedAt,
   };
+}
+
+function linkKey(item: { opportunity: { applicationUrl?: string | null; sourceUrl?: string | null } }): string {
+  return `url:${(item.opportunity.applicationUrl ?? item.opportunity.sourceUrl ?? '').toLowerCase().replace(/^https?:\/\/(www\.)?/, '').replace(/[/?#]+$/, '')}`;
+}
+
+function titleKey(item: { opportunity: { title: string; organization?: string | null } }): string {
+  return `title:${item.opportunity.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()}|${(item.opportunity.organization ?? '').toLowerCase()}`;
 }
 
 /** Background writes still in flight, awaited by `flushPersistence`. */

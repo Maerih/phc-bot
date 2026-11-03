@@ -16,6 +16,28 @@ import { logCommand } from '../../db/repositories/members.js';
 import { truncate } from '../../core/text.js';
 import { POWERED_BY } from '../../whatsapp/format.js';
 import type { Command } from '../types.js';
+import { runSearch } from '../opportunities/run-search.js';
+
+const OPPORTUNITY_WORDS =
+  /\b(jobs?|vacanc\w*|internships?|attachments?|scholarships?|bursar\w*|fellowships?|grants?|funding|opportunit\w*|positions?|openings?|trainings?|short courses?|conferences?|volunteer\w*|webinars?|postdocs?|phd positions?)\b/i;
+const ASKING_TO_FIND =
+  /\b(find|search|look(ing)? for|show( me)?|list|any|are there|get me|recommend|need|want|available|latest|open|current|where can i (get|find|apply))\b/i;
+const FILLER =
+  /\b(please|pls|kindly|can|could|you|help|me|find|search|look(ing)?|for|show|list|any|are|is|there|get|recommend|i|i'm|im|am|need|want|some|available|latest|current|open|opportunities|opportunity|a|an|the|in|at|on|with|of|to|where|apply|which|what|good)\b/gi;
+
+/**
+ * The search words of a question that asks for opportunities, or null when
+ * it is an ordinary question for the assistant.
+ */
+export function opportunitySearchText(question: string): string | null {
+  if (!OPPORTUNITY_WORDS.test(question)) return null;
+  const words = question.trim().split(/\s+/).length;
+  if (!ASKING_TO_FIND.test(question) && words > 6) return null;
+  // How-to questions about opportunities are for the assistant, not the search.
+  if (/^\s*(how|why|what is|what are|explain|tips|should)\b/i.test(question)) return null;
+  // Keep the type words: the search reads them to know what to look for.
+  return question.replace(/[?!.,]/g, ' ').replace(FILLER, ' ').replace(/\s+/g, ' ').trim() || question;
+}
 
 /** Long enough for a real question, short enough not to be an upload channel. */
 const MAX_QUESTION_CHARS = 1000;
@@ -54,7 +76,7 @@ export const askCommand: Command = {
     if (question.length === 0) {
       await context.reply(
         [
-          '*Ask me a public-health question.*',
+          '*Ask me anything — or ask me to find opportunities.*',
           '',
           'For example:',
           '• `.ask what does an epidemiologist do`',
@@ -72,6 +94,15 @@ export const askCommand: Command = {
       await context.reply(
         `That question is ${question.length} characters. Please keep it under ${MAX_QUESTION_CHARS}.`,
       );
+      return;
+    }
+
+    // "Find me nutrition internships in Kisumu" is a search, not a chat: run
+    // the real search (sources plus AI web search) so the answer is listings
+    // with links, never ones the model made up.
+    const searchText = opportunitySearchText(question);
+    if (searchText !== null) {
+      await runSearch(context, { commandLabel: '.ask', text: searchText, aiAugment: true });
       return;
     }
 

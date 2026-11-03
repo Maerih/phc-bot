@@ -490,9 +490,15 @@ Each rule's action: `warn` warns the sender; `delete` (what `on` means) deletes 
 
 The advert rules are tuned for an opportunities community: posts mentioning scholarships, vacancies, deadlines or stipends get the benefit of the doubt, so a stipend amount or an application link alone never triggers them. Use `.mod test` to check a borderline post before turning a rule on.
 
+### AI search and the assistant
+
+With an AI key (DeepSeek preferred: `AI_PROVIDER=auto`), `.scholarships`, `.internships`, `.fellowships`, `.research`, `.grants`, `.events`, `.conferences` and `.training` always add an **AI web search** to the regular sources: the web search provider (Tavily or SearXNG) finds pages, DeepSeek reads them and keeps real, open opportunities Kenyans can apply for, each with its link. Results are merged, duplicates removed, and repeated searches within 30 minutes are served from memory. `.job` keeps the AI search as a fallback when the sources find nothing.
+
+`.ask` answers anything. It knows it is the Colosseum's opportunity assistant, and when a question is really a search ("find me nutrition internships in Kisumu"), it runs the search and answers with real listings instead of words.
+
 ### Opportunity alerts
 
-The bot watches **67 sources** — Kenyan job boards (BrighterMonday, MyJobMag, Fuzu, Work Kenya, VacancyKE, JobWeb Kenya and more), government portals (PSC, Government Advertising Agency, Ministry of Health, KMTC, KEMRI's e-recruitment portal, KNH, MTRH), health research and NGO employers (KEMRI-Wellcome, APHRC, Amref, Kenya Red Cross, Living Goods, PATH, Africa CDC), the UN and development banks, ReliefWeb, and scholarship, fellowship, grant and volunteering sites — and posts the **public-health** ones to every chat that asks for them: community health, health records and information, population health, occupational health and safety, epidemiology, nutrition, WASH, health promotion, M&E and research in health programmes, and related scholarships, fellowships, grants, internships and volunteering.
+The bot watches **87 sources** — public-health searches on Kenyan boards (community health, health records, environmental, occupational and population health, epidemiology, nutrition, WASH, health M&E), Kenyan job boards (BrighterMonday, MyJobMag, Fuzu, Work Kenya, VacancyKE, JobWeb Kenya and more), government portals (PSC, Government Advertising Agency, Ministry of Health, KMTC, KEMRI's e-recruitment portal, KNH, MTRH), health research and NGO employers (KEMRI-Wellcome, APHRC, Amref, Kenya Red Cross, Living Goods, PATH, Africa CDC), the UN and development banks, ReliefWeb, and scholarship, fellowship, grant and volunteering sites — and posts the **public-health** ones to every chat that asks for them: community health, health records and information, population health, occupational health and safety, epidemiology, nutrition, WASH, health promotion, M&E and research in health programmes, and related scholarships, fellowships, grants, internships and volunteering.
 
 | Command | Does |
 |---|---|

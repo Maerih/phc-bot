@@ -1,0 +1,197 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[a4paper,margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tcolorbox}
+\usepackage{array}
+
+\definecolor{phgreen}{HTML}{0B6E4F}
+\definecolor{phlight}{HTML}{E8F5EF}
+\definecolor{phgrey}{HTML}{55606B}
+
+\renewcommand{\familydefault}{\sfdefault}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\setlist{nosep,leftmargin=1.4em}
+
+\titleformat{\section}{\Large\bfseries\color{phgreen}}{}{0pt}{}
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+\titleformat{\subsection}{\large\bfseries\color{phgrey}}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{phgrey}Public Health Colosseum --- User Guide}
+\fancyhead[R]{\small\color{phgrey}Version 1}
+\fancyfoot[C]{\small\color{phgrey}Powered by SCIAT SOLUTIONS \quad·\quad \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcommand{\cmd}[1]{\texttt{\textbf{#1}}}
+\newtcolorbox{tip}{colback=phlight,colframe=phgreen,boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt}
+
+\newenvironment{commands}{%
+  \renewcommand{\arraystretch}{1.35}%
+  \tabularx{\textwidth}{@{}>{\raggedright\arraybackslash}p{5.2cm}X@{}}\toprule
+  \textbf{Type this} & \textbf{What it does} \\\midrule}
+  {\bottomrule\endtabularx}
+
+\begin{document}
+
+\begin{center}
+{\Huge\bfseries\color{phgreen} Public Health Colosseum}\\[4pt]
+{\Large WhatsApp Bot --- User Guide}\\[2pt]
+{\color{phgrey} Find public-health jobs, internships, scholarships and more, right in WhatsApp}
+\end{center}
+
+\vspace{4pt}
+
+\section{Getting started}
+
+Every command starts with a full stop (\cmd{.}). Type it in the group, or in a private chat with the bot, and send it like a normal message.
+
+\begin{commands}
+\cmd{.menu} & The main menu \\
+\cmd{.help} & Every command, in a list \\
+\cmd{.help scholarships} & How one command works, with examples \\
+\cmd{.start} & A quick introduction \\
+\cmd{.about} & About the Colosseum \\
+\cmd{.ping} & Check the bot is awake \\
+\cmd{.sources} & Which websites the bot searches \\
+\end{commands}
+
+\begin{tip}
+\textbf{Tip:} capital letters don't matter. \cmd{.Job}, \cmd{.JOB} and \cmd{.job} all work.
+\end{tip}
+
+\section{Finding opportunities}
+
+Add keywords and a place after any search command. Places can be a town, county, country or ``remote'', and you can name several: \cmd{.job public health nairobi, kisumu}.
+
+\begin{commands}
+\cmd{.job} \textit{keywords} & Jobs by keyword. \newline e.g.\ \cmd{.job community health Kisumu} \\
+\cmd{.jobs} \textit{place / type / today} & Jobs by place, type or how recent. \newline e.g.\ \cmd{.jobs Nairobi}, \cmd{.jobs remote}, \cmd{.jobs today} \\
+\cmd{.scholarships} & Scholarships and tuition funding. \newline e.g.\ \cmd{.scholarships masters public health} \\
+\cmd{.internships} & Internships and attachments. \newline e.g.\ \cmd{.internships nutrition nairobi} \\
+\cmd{.fellowships} & Fellowships and fellow programmes. \newline e.g.\ \cmd{.fellowships global health} \\
+\cmd{.research} & Research posts, PhD and postdoc openings. \newline e.g.\ \cmd{.research epidemiology} \\
+\cmd{.grants} & Grants and calls for proposals. \newline e.g.\ \cmd{.grants africa} \\
+\cmd{.events} & Events, webinars and summits \\
+\cmd{.conferences} & Conferences and calls for abstracts \\
+\cmd{.training} & Short courses, workshops and training \\
+\end{commands}
+
+The opportunity commands search the bot's job sources \emph{and} the web, using AI to keep only real, open opportunities that Kenyans can apply for. Every result has a link to the real listing.
+
+\subsection{Moving through results}
+
+Results come five at a time.
+
+\begin{commands}
+\cmd{.next} & The next five results \\
+\cmd{.prev} & The previous five \\
+\cmd{.details 2} & The full description of result number 2 \\
+\end{commands}
+
+\section{Opportunity alerts}
+
+Turn alerts on and the bot posts new public-health opportunities into the chat by itself, as tidy cards. Each card shows the position, organisation, location, salary, deadline, requirements, a short summary and the link to apply, on the employer's own website whenever possible. It watches more than 80 Kenyan and international job, scholarship, fellowship and volunteering sites.
+
+\begin{commands}
+\cmd{.alerts on} & Start updates in this chat \\
+\cmd{.alerts off} & Stop them \\
+\cmd{.alerts} & Status: on or off, sites watched, how many are waiting \\
+\cmd{.alerts sites} & The list of websites watched \\
+\end{commands}
+
+\textbf{When updates arrive (Nairobi time):}
+\begin{itemize}
+  \item \textbf{Monday 3:00 AM to Friday 1:00 PM} --- a new opportunity every few minutes.
+  \item \textbf{Friday 2:00 PM} --- the weekly report: everything found that week, grouped by type, with a spreadsheet you can open in Excel or on your phone.
+  \item \textbf{Weekends} --- rest. Updates return on Monday.
+\end{itemize}
+
+In a group, only group admins can turn alerts on or off. In a private chat with the bot, anyone can turn them on for themselves.
+
+\section{Ask the assistant}
+
+\cmd{.ask} answers any question. It is especially good at career help: CVs, cover letters, interviews, application essays and public-health career paths. Ask it to find something, and it runs a real search.
+
+\begin{commands}
+\cmd{.ask} \textit{your question} & Ask anything \\
+\cmd{.ask how do I write a cover letter for a WASH officer job} & Career and application help \\
+\cmd{.ask what does a health records officer do} & Explanations in plain language \\
+\cmd{.ask find me nutrition internships in Kisumu} & Searches for real listings \\
+\end{commands}
+
+\begin{tip}
+The assistant never makes up job adverts or links: listings always come from a real search. For your own health, it gives general information only. Please see a clinician for personal care.
+\end{tip}
+
+\section{For group admins}
+
+These work for the group's admins. The bot must be an admin of the group too.
+
+\subsection{Managing the group}
+
+\begin{commands}
+\cmd{.groupinfo} & The group's details and settings (anyone) \\
+\cmd{.add 2547XXXXXXXX} & Add someone (number with country code, no +) \\
+\cmd{.kick @member} & Remove someone \\
+\cmd{.promote @member} / \cmd{.demote @member} & Make or unmake an admin \\
+\cmd{.close} / \cmd{.open} & Only admins can post / everyone can post \\
+\cmd{.lock} / \cmd{.unlock} & Only admins / everyone can edit group info \\
+\cmd{.welcome on} / \cmd{.welcome off} & Greet new members automatically \\
+\cmd{.welcome set} \textit{message} & Your own greeting: \cmd{\{name\}} tags the newcomer, \cmd{\{group\}} is the group's name \\
+\cmd{.welcome test} & Preview the greeting \\
+\end{commands}
+
+\subsection{Keeping the group clean}
+
+\begin{commands}
+\cmd{.mod} & Overview of the group's rules \\
+\cmd{.mod on} & Recommended protection: delete and warn for invite links, adverts and spam \\
+\cmd{.mod strict} & The same, and remove members who reach the warning limit \\
+\cmd{.mod off} & Switch every rule off \\
+\cmd{.mod test} \textit{message} & See what a message would trigger, without deleting anything \\
+\cmd{.mod copy} & Copy these rules to the other groups of the community \\
+\cmd{.antilink on} & Delete links to other WhatsApp groups and channels (job links still work); \cmd{.antilink on all} for every link \\
+\cmd{.antilink allow who.int} & Always allow links to a website \\
+\cmd{.antipromo on} & Delete adverts, sales pitches and money schemes \\
+\cmd{.antispam on} & Delete flooding and the same message posted again and again \\
+\cmd{.badword add} \textit{word} & Ban a word or phrase; \cmd{.badword on} to enforce, \cmd{.badword list} to see them \\
+\cmd{.silence @member 2h} & Delete everything a member posts for a while (30m, 2h, 1d) \\
+\cmd{.unsilence @member} / \cmd{.silenced} & Lift a silence / see who is silenced \\
+\cmd{.warn @member} \textit{reason} & Give a warning \\
+\cmd{.warnings @member} / \cmd{.resetwarns @member} & See / clear a member's warnings \\
+\cmd{.warnlimit 3} & Warnings before removal (for \cmd{remove} rules) \\
+\end{commands}
+
+Each rule can be set to \cmd{warn} (warn only), \cmd{on} (delete and warn) or \cmd{remove} (delete, warn and remove at the warning limit). Group admins are never moderated.
+
+\section{For platform administrators}
+
+Only the numbers set up as administrators of the bot can use these.
+
+\begin{commands}
+\cmd{.scan} & Check every opportunity website right now and report what was found \\
+\cmd{.pushall} & Send everything waiting into this chat at once, as a list and a spreadsheet \\
+\cmd{.alerts interval 3-5} & How often opportunity cards go out (here every 3 to 5 minutes) \\
+\cmd{.alerts pause} / \cmd{.alerts resume} & Pause or resume updates in every chat \\
+\end{commands}
+
+\vfill
+\begin{center}
+\color{phgrey}\small
+Questions or problems? Contact your group admins.\\
+\textbf{Public Health Colosseum} · Powered by \textbf{SCIAT SOLUTIONS}
+\end{center}
+
+\end{document}

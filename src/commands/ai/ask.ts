@@ -46,12 +46,13 @@ export const askCommand: Command = {
   name: 'ask',
   aliases: ['ai', 'assistant'],
   category: 'ai',
-  summary: 'Ask a public-health question',
+  summary: 'Ask anything, or ask me to find opportunities',
   usage: '.ask <question>',
   examples: [
     '.ask what does an epidemiologist actually do day to day',
     '.ask how do I prepare for an MPH application',
     '.ask explain confounding in simple terms',
+    '.ask find me nutrition internships in Kisumu',
   ],
 
   async handler(context) {

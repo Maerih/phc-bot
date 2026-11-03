@@ -92,6 +92,14 @@ export function getTrackerAiProvider(): AiProvider | null {
   return trackerCached;
 }
 
+/**
+ * The provider for `.ask`: DeepSeek whenever its key is set, whatever
+ * AI_PROVIDER says; otherwise the main provider.
+ */
+export function getAssistantProvider(): AiProvider | null {
+  return getTrackerAiProvider();
+}
+
 /** Reset the cached provider. Used by tests. */
 export function resetAiProvider(): void {
   cached = undefined;

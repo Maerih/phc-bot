@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { opportunitySearchText } from './ask.js';
+import { needsCurrentInformation, opportunitySearchText } from './ask.js';
 
 describe('.ask routing', () => {
   it('turns opportunity requests into searches', () => {
@@ -17,5 +17,18 @@ describe('.ask routing', () => {
   it('answers how-to questions about applications rather than searching', () => {
     expect(opportunitySearchText('how do I write a cover letter for a scholarship')).toBeNull();
     expect(opportunitySearchText('tips for a fellowship interview')).toBeNull();
+  });
+});
+
+describe('.ask and current events', () => {
+  it('looks things up when the question is about now', () => {
+    expect(needsCurrentInformation('what is the current situation of public health in Kenya')).toBe(true);
+    expect(needsCurrentInformation('latest cholera outbreak news')).toBe(true);
+    expect(needsCurrentInformation('what happened in 2026 with the health budget')).toBe(true);
+  });
+
+  it('answers timeless questions directly', () => {
+    expect(needsCurrentInformation('explain confounding in simple terms')).toBe(false);
+    expect(needsCurrentInformation('what is the capital of Australia')).toBe(false);
   });
 });

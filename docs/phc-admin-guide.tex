@@ -1,0 +1,169 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[a4paper,margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tcolorbox}
+\usepackage{array}
+\usepackage{amssymb}
+
+\definecolor{phgreen}{HTML}{0B6E4F}
+\definecolor{phlight}{HTML}{E8F5EF}
+\definecolor{phgrey}{HTML}{55606B}
+
+\renewcommand{\familydefault}{\sfdefault}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\setlist{nosep,leftmargin=1.4em}
+
+\titleformat{\section}{\Large\bfseries\color{phgreen}}{}{0pt}{}
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+\titleformat{\subsection}{\large\bfseries\color{phgrey}}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{phgrey}Public Health Colosseum --- Admin Guide}
+\fancyhead[R]{\small\color{phgrey}Version 1}
+\fancyfoot[C]{\small\color{phgrey}Powered by SCIAT SOLUTIONS \quad·\quad \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcommand{\cmd}[1]{\texttt{\textbf{#1}}}
+\newtcolorbox{tip}{colback=phlight,colframe=phgreen,boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt}
+
+\newenvironment{commands}{%
+  \renewcommand{\arraystretch}{1.35}%
+  \tabularx{\textwidth}{@{}>{\raggedright\arraybackslash}p{5.6cm}X@{}}\toprule
+  \textbf{Command} & \textbf{What it does} \\\midrule}
+  {\bottomrule\endtabularx}
+\newenvironment{settings}{%
+  \renewcommand{\arraystretch}{1.35}%
+  \tabularx{\textwidth}{@{}>{\raggedright\arraybackslash}p{5.1cm}X>{\raggedright\arraybackslash}p{3.4cm}@{}}\toprule
+  \textbf{Setting} & \textbf{What it is for} & \textbf{Where to get it} \\\midrule}
+  {\bottomrule\endtabularx}
+\newcommand{\shell}[1]{\begin{tcolorbox}[colback=black!85,colframe=black!85,coltext=white,boxrule=0pt,arc=2pt,left=6pt,top=3pt,bottom=3pt]\ttfamily #1\end{tcolorbox}}
+
+
+\begin{document}
+
+\begin{center}
+{\Huge\bfseries\color{phgreen} Public Health Colosseum}\\[4pt]
+{\Large Admin Guide --- Running and Managing the Bot}\\[2pt]
+{\color{phgrey} Server commands, API keys and settings, WhatsApp admin commands}
+\end{center}
+
+\section{Before you start}
+
+Log in to the server over SSH and go to the bot's folder. Every server command below is run from there.
+
+\shell{cd /root/phc-bot}
+
+\textbf{First install on a new server} (one command, then answer the questions):
+
+\shell{curl -fsSL https://raw.githubusercontent.com/Maerih/phc-bot/main/install.sh | bash}
+
+\section{Running the bot}
+
+\begin{commands}
+\cmd{./ctl.sh start} & Start everything: checks the server, Docker, settings, builds, database, bot, and shows the QR code if WhatsApp needs pairing. Safe to run any time --- it only changes what needs changing. \\
+\cmd{./ctl.sh stop} & Stop the bot and the database \\
+\cmd{./ctl.sh restart} & Restart the bot (keeps the WhatsApp session) \\
+\cmd{./ctl.sh status} & Is it running, and is WhatsApp connected? \\
+\cmd{./ctl.sh doctor} & Run every check, including that each API key works. Changes nothing. \textbf{Run this first when anything is wrong.} \\
+\cmd{./ctl.sh logs} & Watch the live log (Ctrl-C stops watching) \\
+\cmd{./ctl.sh update} & Get the latest version from GitHub and restart. Keeps data, settings and session. \\
+\end{commands}
+
+\section{WhatsApp connection}
+
+\begin{commands}
+\cmd{./ctl.sh pair} & Show the QR code in the terminal. Scan with WhatsApp $\rightarrow$ Settings $\rightarrow$ Linked devices $\rightarrow$ Link a device. \\
+\cmd{./ctl.sh reset-session} & Unlink and pair again with a fresh QR code. Use when the bot is connected but does not answer. Data and settings are kept. \\
+\end{commands}
+
+\begin{tip}
+\textbf{The one rule:} never run the bot on two machines with the same WhatsApp session --- it breaks the session. Moving servers? Pair the new one fresh, then remove the old device in WhatsApp's Linked devices.
+\end{tip}
+
+\section{API keys and settings}
+
+\subsection{The easy way: answer the questions}
+
+\shell{./ctl.sh setup \\ ./ctl.sh start}
+
+Setup asks for the admin numbers and every key. Keys are hidden as you type; pressing Enter keeps the current value. Then \cmd{./ctl.sh start} applies the changes (the bot restarts only if something changed).
+
+\subsection{Or edit the settings file directly}
+
+\shell{nano .env \\ ./ctl.sh start}
+
+In nano: change the line, then Ctrl-O, Enter to save, Ctrl-X to exit. Each setting is one line: \cmd{NAME=value}, no spaces around the \cmd{=}.
+
+\subsection{The settings}
+
+\begin{settings}
+\cmd{ADMIN\_NUMBERS} & Admin WhatsApp numbers, country code first, commas between: \cmd{254712345678,254798765432} & --- \\
+\cmd{DEEPSEEK\_API\_KEY} & The AI: \cmd{.ask}, AI search, choosing which jobs go out in alerts & platform.deepseek.com/ api\_keys \\
+\cmd{TAVILY\_API\_KEY} & Web search for \cmd{.ask} and the search commands. Also set \cmd{WEB\_SEARCH\_PROVIDER=tavily} (setup does this). & app.tavily.com (free plan) \\
+\cmd{JSEARCH\_API\_KEY} & LinkedIn and other big job sites, searched daily & rapidapi.com $\rightarrow$ JSearch $\rightarrow$ free plan \\
+\cmd{RELIEFWEB\_APPNAME} & ReliefWeb NGO, UN and humanitarian jobs & apidoc.reliefweb.int \\
+\cmd{AI\_PROVIDER} & \cmd{auto} (DeepSeek first), \cmd{deepseek}, \cmd{gemini}, \cmd{anthropic} or \cmd{none} & --- \\
+\cmd{GEMINI\_API\_KEY}, \cmd{ANTHROPIC\_API\_KEY} & Optional back-up AIs, used only if DeepSeek has no key & aistudio.google.com, console.anthropic.com \\
+\cmd{TRACKER\_ENABLED} & \cmd{on} or \cmd{off}: the opportunity alerts & --- \\
+\cmd{TRACKER\_INTERVAL\_MINUTES} & How often the job sites are checked (default 30) & --- \\
+\cmd{TIMEZONE} & For the alert schedule and deadlines (default \cmd{Africa/Nairobi}) & --- \\
+\cmd{COMMAND\_PREFIX} & The character commands start with (default \cmd{.}) & --- \\
+\end{settings}
+
+After any change, \cmd{./ctl.sh doctor} shows each key as working (\textcolor{phgreen}{\checkmark}) or what is wrong with it.
+
+\section{Data and safety}
+
+\begin{commands}
+\cmd{./ctl.sh backup} & Save the database and WhatsApp session into \cmd{backups/}. Keep these files private: they can link a device to your WhatsApp. \\
+\cmd{./ctl.sh autostart on} & Start the bot by itself after the server reboots (\cmd{off} to undo) \\
+\cmd{./ctl.sh use-system-docker} & Move the bot, with its database, onto the server's own Docker. Only when \cmd{doctor} says the bot cannot reach the internet. \\
+\cmd{./ctl.sh uninstall} & Remove the bot, its image and its \textbf{database}. The WhatsApp session is kept. Take a backup first. \\
+\end{commands}
+
+\section{Admin commands in WhatsApp}
+
+Sent from a number in \cmd{ADMIN\_NUMBERS}:
+
+\begin{commands}
+\cmd{.alerts on} / \cmd{.alerts off} & Opportunity alerts in this chat (group admins can too) \\
+\cmd{.alerts} & Status: sites watched, last check, how many opportunities are waiting \\
+\cmd{.scan} & Check every opportunity site right now and report what was found \\
+\cmd{.pushall} & Send everything waiting into this chat at once, as a list and a spreadsheet \\
+\cmd{.alerts interval 3-5} & Gap between alert cards: here a random 3 to 5 minutes; any 1--120 \\
+\cmd{.alerts pause} / \cmd{.alerts resume} & Stop or restart alerts in every chat at once \\
+\cmd{.ping} & Is the bot alive? \\
+\end{commands}
+
+\textbf{Alert schedule (Nairobi time):} Monday 3:00 AM -- Friday 1:00 PM, a card every few minutes; Friday 2:00 PM the weekly report and spreadsheet, then the weekend message; nothing at the weekend. Group-management and moderation commands are in the User Guide.
+
+\section{When something is wrong}
+
+\begin{enumerate}[label=\textbf{\arabic*.},leftmargin=1.6em,itemsep=3pt]
+  \item Run \cmd{./ctl.sh doctor} and read the lines marked \textbf{$\times$} --- each says how to fix it.
+  \item \textbf{Connected but not answering:} \cmd{./ctl.sh reset-session}, then scan the QR again.
+  \item \textbf{After installing other software on the server:} \cmd{./ctl.sh update}, then \cmd{./ctl.sh doctor}.
+  \item \textbf{AI or web answers missing:} \cmd{./ctl.sh doctor} shows which key is missing or rejected; add it with \cmd{./ctl.sh setup}.
+  \item \textbf{No alerts arriving:} send \cmd{.alerts} --- check it says ON and something is waiting; remember the weekend pause.
+  \item \textbf{Still stuck:} share the output of \cmd{./ctl.sh doctor} and a minute of \cmd{./ctl.sh logs}.
+\end{enumerate}
+
+\vfill
+\begin{center}
+\color{phgrey}\small
+\textbf{Public Health Colosseum} · Powered by \textbf{SCIAT SOLUTIONS}
+\end{center}
+
+\end{document}

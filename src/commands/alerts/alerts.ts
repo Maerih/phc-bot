@@ -8,17 +8,21 @@
  */
 import { env } from '../../config/env.js';
 import { TRACKED_SITES } from '../../tracker/sites.js';
-import { runScan, trackerStatus } from '../../tracker/service.js';
+import { dripRange, pushAll, runScan, setDripRange, trackerStatus } from '../../tracker/service.js';
+import { parseDripRange, type DripRange } from '../../tracker/schedule.js';
 import * as store from '../../tracker/store.js';
 import { guardGroup } from '../group/common.js';
 import type { Command, CommandContext } from '../types.js';
 
-const SCHEDULE = [
-  '🕒 *Schedule (Nairobi time)*',
-  '• Monday 3:00 AM – Friday 1:00 PM: a new opportunity every 10–15 minutes',
-  '• Friday 2:00 PM: the weekly report, with a spreadsheet of everything found',
-  '• Weekends: rest — updates resume on Monday',
-].join('\n');
+function schedule(range: DripRange): string {
+  const gap = range.minMinutes === range.maxMinutes ? `${range.minMinutes}` : `${range.minMinutes}–${range.maxMinutes}`;
+  return [
+    '🕒 *Schedule (Nairobi time)*',
+    `• Monday 3:00 AM – Friday 1:00 PM: a new opportunity every ${gap} minutes`,
+    '• Friday 2:00 PM: the weekly report, with a spreadsheet of everything found',
+    '• Weekends: rest — updates resume on Monday',
+  ].join('\n');
+}
 
 async function mayChange(context: CommandContext): Promise<boolean> {
   if (!context.isGroup) return true;
@@ -41,20 +45,89 @@ async function status(context: CommandContext): Promise<void> {
       `Last check: ${lastScan}`,
       `Waiting to be sent: ${state.queue}`,
       `AI selection: ${state.ai ? 'on' : 'off (keyword matching)'}`,
+      `LinkedIn & job-index searches (JSearch): ${state.jsearch ? 'on, daily' : 'off (needs JSEARCH_API_KEY)'}`,
       '',
-      SCHEDULE,
+      schedule(state.drip),
       '',
       '`.alerts on` · `.alerts off` · `.alerts sites`',
+      'Admins: `.scan` · `.pushall` · `.alerts interval 3-5` · `.alerts pause`',
     ].join('\n'),
   );
 }
+
+/** Read every site now; platform administrators only, as it is heavy. */
+async function scanNow(context: CommandContext): Promise<void> {
+  if (!context.isAdmin) {
+    await context.reply('Only platform administrators can start a scan by hand.');
+    return;
+  }
+  await context.react('⏳');
+  await context.reply('🔎 Scanning every site now. This takes about a minute…');
+  const results = await runScan();
+  if (results.length === 0) {
+    await context.reply('A scan is already running; the results will be in `.alerts` in a minute or two.');
+    return;
+  }
+  const reachable = results.filter((result) => result.ok).length;
+  const fresh = results.reduce((sum, result) => sum + result.fresh, 0);
+  const found = results.reduce((sum, result) => sum + result.relevant, 0);
+  const state = await trackerStatus();
+  await context.reply(
+    [
+      '✅ *Scan finished*',
+      `Sites read: ${reachable} of ${results.length}`,
+      `New listings seen: ${fresh}`,
+      `New public-health opportunities: *${found}*`,
+      `Waiting to be sent: ${state.queue}`,
+      '',
+      'Send them all at once with `.pushall`, or let them arrive one by one.',
+    ].join('\n'),
+  );
+}
+
+/** Everything waiting, to this chat, as one list and a spreadsheet. */
+async function pushAllHere(context: CommandContext): Promise<void> {
+  if (!context.isAdmin && !(context.isGroup && (await mayChange(context)))) {
+    if (!context.isGroup) await context.reply('Only platform administrators can push every opportunity at once.');
+    return;
+  }
+  await context.react('📤');
+  try {
+    const count = await pushAll(context.chatJid);
+    if (count === 0) await context.reply('Nothing is waiting to be sent right now. Try `.scan` first.');
+  } catch (cause) {
+    context.log.warn({ err: String(cause) }, 'push all failed');
+    await context.reply('Could not send the list just now. Please try again in a minute.');
+  }
+}
+
+export const scanCommand: Command = {
+  name: 'scan',
+  category: 'group',
+  summary: 'Read every opportunity site right now (admins)',
+  usage: '.scan',
+  async handler(context) {
+    await scanNow(context);
+  },
+};
+
+export const pushAllCommand: Command = {
+  name: 'pushall',
+  aliases: ['sendall'],
+  category: 'group',
+  summary: 'Send every waiting opportunity here at once, as a list and spreadsheet (admins)',
+  usage: '.pushall',
+  async handler(context) {
+    await pushAllHere(context);
+  },
+};
 
 export const alertsCommand: Command = {
   name: 'alerts',
   aliases: ['updates', 'track'],
   category: 'group',
   summary: 'Public-health opportunity updates in this chat',
-  usage: '.alerts <on|off|sites>',
+  usage: '.alerts <on|off|sites|interval|scan|pushall>',
   examples: ['.alerts on', '.alerts off', '.alerts'],
   async handler(context) {
     const sub = context.argv[0]?.toLowerCase();
@@ -72,7 +145,7 @@ export const alertsCommand: Command = {
           '',
           `I watch ${TRACKED_SITES.length} Kenyan and international sites for public-health jobs, internships, scholarships, fellowships, grants and volunteering, and post them here as cards with the original link.`,
           '',
-          SCHEDULE,
+          schedule(await dripRange()),
           '',
           'Stop any time with `.alerts off`.',
         ].join('\n'),
@@ -110,20 +183,35 @@ export const alertsCommand: Command = {
       return;
     }
 
-    if (sub === 'check') {
+    if (sub === 'check' || sub === 'scan') {
+      await scanNow(context);
+      return;
+    }
+
+    if (sub === 'pushall' || sub === 'all') {
+      await pushAllHere(context);
+      return;
+    }
+
+    if (sub === 'interval' || sub === 'every') {
       if (!context.isAdmin) {
-        await context.reply('Only platform administrators can start a check by hand.');
+        await context.reply('Only platform administrators can change how often opportunities are sent.');
         return;
       }
-      await context.react('⏳');
-      const results = await runScan();
-      if (results.length === 0) {
-        await context.reply('A check is already running; try again in a few minutes.');
+      const range = parseDripRange(context.argv.slice(1).join(''));
+      if (!range) {
+        const current = await dripRange();
+        await context.reply(
+          `Opportunities go out every ${current.minMinutes}–${current.maxMinutes} minutes.\n\n` +
+            'Change it with `.alerts interval 3` (every 3 minutes) or `.alerts interval 3-5` (a random gap of 3 to 5 minutes). ' +
+            'Anything from 1 to 120 minutes.',
+        );
         return;
       }
-      const reachable = results.filter((result) => result.ok).length;
-      const found = results.reduce((sum, result) => sum + result.relevant, 0);
-      await context.reply(`Checked ${reachable} of ${results.length} sites: ${found} new public-health opportunities queued.`);
+      await setDripRange(range);
+      await context.reply(
+        `⏱️ Opportunities now go out every ${range.minMinutes === range.maxMinutes ? range.minMinutes : `${range.minMinutes}–${range.maxMinutes}`} minutes, in every chat with alerts on.`,
+      );
       return;
     }
 

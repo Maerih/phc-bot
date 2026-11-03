@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { parseJson, withoutTracking } from './ai.js';
+import { JSEARCH_TOPICS, SEARCHES_PER_DAY, toHit, topicsForDay } from './jsearch.js';
 import { formatDeadline, renderCard, renderWeeklyReport, weeklyReportCsv, weekendMessage, type OpportunityCard } from './card.js';
-import { extractLinks, htmlToText, listingCandidates, siteKey } from './html.js';
+import { extractLinks, htmlToText, listingCandidates, siteKey, tidyRowTitle } from './html.js';
 import { isGenericTitle, isHealthish, isPublicHealth, keywordVerdict, typeFromTitle } from './relevance.js';
 import { allowedBy, parseRobots } from './robots.js';
-import { inDripWindow, isReportTime, localTime, nextDripDelayMs, weekStart, type LocalTime } from './schedule.js';
+import { inDripWindow, isReportTime, localTime, nextDripDelayMs, parseDripRange, weekStart, type LocalTime } from './schedule.js';
 import { TRACKED_SITES } from './sites.js';
 
 const at = (weekday: number, hour: number, minute = 0): LocalTime => ({ weekday, hour, minute, date: '2026-11-02' });
@@ -41,9 +42,17 @@ describe('schedule', () => {
     expect(isReportTime(at(6, 14, 0))).toBe(false);
   });
 
-  it('spaces opportunities 10 to 15 minutes apart', () => {
-    expect(nextDripDelayMs(() => 0)).toBe(10 * 60_000);
-    expect(nextDripDelayMs(() => 1)).toBe(15 * 60_000);
+  it('spaces opportunities 5 to 8 minutes apart by default', () => {
+    expect(nextDripDelayMs(undefined, () => 0)).toBe(5 * 60_000);
+    expect(nextDripDelayMs(undefined, () => 1)).toBe(8 * 60_000);
+  });
+
+  it('reads an interval an administrator sets', () => {
+    expect(parseDripRange('3')).toEqual({ minMinutes: 3, maxMinutes: 3 });
+    expect(parseDripRange('3-5')).toEqual({ minMinutes: 3, maxMinutes: 5 });
+    expect(parseDripRange('0')).toBeNull();
+    expect(parseDripRange('9-4')).toBeNull();
+    expect(parseDripRange('soon')).toBeNull();
   });
 
   it('reads the local time in Nairobi', () => {
@@ -71,7 +80,12 @@ describe('html', () => {
 
   it('takes the title from the table row for a "View" button', () => {
     const titles = listingCandidates(page, 'https://jobs.example.co.ke/jobs').map((link) => link.text);
-    expect(titles).toContain('VN01024 Research Assistant – Thika');
+    expect(titles).toContain('Research Assistant – Thika');
+  });
+
+  it('tidies a title taken from a table row', () => {
+    expect(tidyRowTitle('VN01027 Data Manager - Kisumu Contract 1 11/20/26: 5:00:00 PM KMR 05')).toBe('Data Manager - Kisumu Contract 1');
+    expect(tidyRowTitle('Research Assistant - Thika_Nairobi')).toBe('Research Assistant - Thika/Nairobi');
   });
 
   it('marks links to other sites as external', () => {
@@ -221,5 +235,44 @@ describe('sites', () => {
 
   it('leaves out sites that forbid automated reading', () => {
     expect(TRACKED_SITES.some((site) => /linkedin|indeed|glassdoor|upwork|flexjobs/.test(site.url))).toBe(false);
+  });
+});
+
+describe('JSearch', () => {
+  it('covers every topic every other day', () => {
+    const seen = new Set([...topicsForDay(0), ...topicsForDay(1)]);
+    expect(seen.size).toBe(Math.min(JSEARCH_TOPICS.length, SEARCHES_PER_DAY * 2));
+  });
+
+  it('turns a result into a card with salary, terms and the apply link', () => {
+    const hit = toHit({
+      job_title: 'Community Health Officer',
+      employer_name: 'Living Goods',
+      job_publisher: 'LinkedIn',
+      job_employment_type: 'FULLTIME',
+      job_apply_link: 'https://www.linkedin.com/jobs/view/123',
+      job_apply_is_direct: false,
+      job_description: '<p>Lead CHPs in Kisumu.</p>',
+      job_city: 'Kisumu',
+      job_country: 'KE',
+      job_min_salary: 80000,
+      job_max_salary: 120000,
+      job_salary_currency: 'KES',
+      job_salary_period: 'MONTH',
+      job_offer_expiration_datetime_utc: '2026-11-30T00:00:00.000Z',
+    });
+    expect(hit?.card).toMatchObject({
+      organization: 'Living Goods',
+      location: 'Kisumu, Kenya',
+      salary: 'KES 80,000 – 120,000 per month',
+      deadline: '2026-11-30',
+      terms: 'Fulltime',
+      foundOn: 'LinkedIn (via JSearch)',
+      applyUrl: 'https://www.linkedin.com/jobs/view/123',
+    });
+  });
+
+  it('skips results without a title or link', () => {
+    expect(toHit({ job_title: 'X' })).toBeNull();
   });
 });

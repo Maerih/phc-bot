@@ -32,7 +32,7 @@ import {
 import { resetWarnsCommand, warnCommand, warningsCommand } from './group/warn.js';
 import { groupInfoCommand } from './group/info.js';
 import { askCommand } from './ai/ask.js';
-import { alertsCommand } from './alerts/alerts.js';
+import { alertsCommand, pushAllCommand, scanCommand } from './alerts/alerts.js';
 import {
   conferencesCommand,
   eventsCommand,
@@ -92,6 +92,8 @@ const COMMANDS: readonly Command[] = [
   warnLimitCommand,
   // opportunity alerts
   alertsCommand,
+  scanCommand,
+  pushAllCommand,
   // assistant
   askCommand,
   // result navigation

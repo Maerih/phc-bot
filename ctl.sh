@@ -702,6 +702,14 @@ run_setup() {
 	if [ -n "$key" ]; then set_env DEEPSEEK_API_KEY "$key"; fi
 
 	say ""
+	say "  LinkedIn and other big job sites, through JSearch (LinkedIn has no public"
+	say "  job-search API). Free key: https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch"
+	hint="Enter to skip"
+	[ -n "$(env_value JSEARCH_API_KEY)" ] && hint="Enter keeps the current key"
+	key="$(ask_secret "JSearch (RapidAPI) key ($hint; typing is hidden)")"
+	if [ -n "$key" ]; then set_env JSEARCH_API_KEY "$key"; fi
+
+	say ""
 	say "  ReliefWeb: humanitarian and NGO jobs. Needs a free app name from"
 	say "  https://apidoc.reliefweb.int/parameters#appname"
 	hint="Enter to skip"
@@ -772,6 +780,7 @@ report_features() {
 		note "Opportunity alerts: keyword matching only — a DeepSeek key makes them smarter: ./ctl.sh setup"
 	fi
 	if [ -n "$(env_value RELIEFWEB_APPNAME)" ]; then ok "ReliefWeb jobs: on"; else note "ReliefWeb jobs: off (needs RELIEFWEB_APPNAME: ./ctl.sh setup)"; fi
+	if [ -n "$(env_value JSEARCH_API_KEY)" ]; then ok "LinkedIn & job-index searches (JSearch): on, daily"; else note "LinkedIn & job-index searches: off (needs a free JSearch key: ./ctl.sh setup)"; fi
 	case "$(env_value WEB_SEARCH_PROVIDER)" in
 		tavily)
 			if [ -n "$(env_value TAVILY_API_KEY)" ]; then ok "Live web search: Tavily"; else note "Live web search: off — TAVILY_API_KEY is empty"; fi

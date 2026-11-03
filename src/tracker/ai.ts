@@ -34,7 +34,12 @@ const SCOPE = [
   'IN scope as well: multi-vacancy adverts and calls from health, public-health, water and',
   'sanitation bodies (e.g. "Vacancies at KMTC", "Ministry of Health jobs", "Water & Sanitation',
   'Co. careers", a ministry internship programme), because they usually include public-health',
-  'posts; and public-health conferences, workshops, summer schools and courses.'
+  'posts; and public-health conferences, workshops, summer schools and courses.',
+  'Where: members are in Kenya. A job must be in Kenya or East Africa, Africa-wide, remote, or',
+  'clearly open to international applicants. Leave out jobs tied to a duty station elsewhere,',
+  'and UN "National Officer" (NO-) or national consultant posts outside Kenya, which only that',
+  "country's citizens may fill. Scholarships, fellowships, grants and courses open to Kenyans",
+  'are in scope wherever they are held.'
 ].join('\n');
 
 /** A link without the tags job boards add to track their referrals. */

@@ -1,7 +1,7 @@
 /**
  * When the tracker talks to members, in the community's own timezone:
  *
- *   Monday 03:00 → Friday 13:00   one opportunity every 10–15 minutes
+ *   Monday 03:00 → Friday 13:00   one opportunity every few minutes (5–8 by default)
  *   Friday 14:00                  the weekly report, then a weekend message
  *   the weekend                   silence (scanning continues quietly)
  */
@@ -62,9 +62,27 @@ export function weekStart(t: LocalTime): string {
   return date.toISOString().slice(0, 10);
 }
 
-/** The next gap between two opportunities: 10 to 15 minutes. */
-export function nextDripDelayMs(random: () => number = Math.random): number {
-  return Math.round((10 + random() * 5) * 60_000);
+export interface DripRange {
+  minMinutes: number;
+  maxMinutes: number;
+}
+
+/** Five to eight minutes between cards unless an administrator changes it. */
+export const DEFAULT_DRIP: DripRange = { minMinutes: 5, maxMinutes: 8 };
+
+/** "5", "5-8" or "5–8" → a range, within 1 to 120 minutes. Null when unreadable. */
+export function parseDripRange(text: string): DripRange | null {
+  const match = /^(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?$/.exec(text.trim());
+  if (!match) return null;
+  const min = Number(match[1]);
+  const max = match[2] ? Number(match[2]) : min;
+  if (min < 1 || max > 120 || max < min) return null;
+  return { minMinutes: min, maxMinutes: max };
+}
+
+/** The next gap between two opportunities, picked at random within the range. */
+export function nextDripDelayMs(range: DripRange = DEFAULT_DRIP, random: () => number = Math.random): number {
+  return Math.round((range.minMinutes + random() * (range.maxMinutes - range.minMinutes)) * 60_000);
 }
 
 export function weekLabel(startIso: string): string {

@@ -24,9 +24,20 @@ import {
 } from './card.js';
 import { extractLinks, htmlToText, listingCandidates } from './html.js';
 import { reliefwebConnector } from '../sources/jobs/reliefweb.js';
+import { jsearchConfigured, searchKenya, topicsForDay, type JSearchHit } from './jsearch.js';
 import { isGenericTitle, isHealthish, keywordVerdict, typeFromTitle } from './relevance.js';
 import { isAllowed } from './robots.js';
-import { inDripWindow, isReportTime, localTime, nextDripDelayMs, weekLabel, weekStart } from './schedule.js';
+import {
+  DEFAULT_DRIP,
+  inDripWindow,
+  isReportTime,
+  localTime,
+  nextDripDelayMs,
+  parseDripRange,
+  weekLabel,
+  weekStart,
+  type DripRange,
+} from './schedule.js';
 import { TRACKED_SITES, type TrackedSite } from './sites.js';
 import * as store from './store.js';
 
@@ -206,6 +217,53 @@ export async function scanReliefWeb(): Promise<ScanResult> {
   return result;
 }
 
+/**
+ * JSearch, once a day: a few public-health searches for Kenya, rotating
+ * through the topics so each comes round every other day.
+ */
+export async function scanJSearch(force = false): Promise<ScanResult> {
+  const result: ScanResult = { site: 'jsearch', ok: false, candidates: 0, fresh: 0, relevant: 0, seeded: false };
+  if (!jsearchConfigured()) return result;
+  const today = localTime(new Date(), env.TIMEZONE).date;
+  if (!force && (await store.getState('jsearch:last')) === today) {
+    result.ok = true;
+    return result;
+  }
+  await store.setState('jsearch:last', today);
+  const dayNumber = Math.floor(Date.parse(`${today}T00:00:00Z`) / 86_400_000);
+
+  const hits = new Map<string, JSearchHit>();
+  for (const topic of topicsForDay(dayNumber)) {
+    for (const hit of await searchKenya(topic)) hits.set(store.urlHash(hit.url), hit);
+  }
+  result.ok = true;
+  result.candidates = hits.size;
+  const known = await store.knownHashes([...hits.keys()]);
+  const fresh = [...hits.entries()].filter(([hash]) => !known.has(hash));
+  result.fresh = fresh.length;
+  if (fresh.length === 0) return result;
+
+  // The searches were already about public health; DeepSeek still weeds out
+  // the near misses a keyword search always brings back.
+  const verdict = await classifyTitles(fresh.map(([, hit]) => ({ title: hit.label, url: hit.url })), { name: 'JSearch', health: true });
+  const relevant = new Set(
+    fresh.filter(([, hit], index) => (verdict ? verdict.has(index) : keywordVerdict(hit.label, true))).map(([hash]) => hash),
+  );
+  result.relevant = relevant.size;
+  await store.insertItems(
+    fresh.map(([hash, hit]) => ({
+      hash,
+      site: 'jsearch',
+      url: hit.url,
+      title: hit.label,
+      relevant: relevant.has(hash),
+      seeded: false,
+      card: hit.card,
+    })),
+  );
+  return result;
+}
+
 export async function runScan(sites: readonly TrackedSite[] = TRACKED_SITES): Promise<ScanResult[]> {
   if (scanning) return [];
   scanning = true;
@@ -226,10 +284,15 @@ export async function runScan(sites: readonly TrackedSite[] = TRACKED_SITES): Pr
     });
     await Promise.all(workers);
     if (sites === TRACKED_SITES) {
-      try {
-        results.push(await scanReliefWeb());
-      } catch (cause) {
-        log.warn({ err: cause instanceof Error ? cause.message : String(cause) }, 'ReliefWeb scan failed');
+      for (const [name, scan] of [
+        ['ReliefWeb', scanReliefWeb],
+        ['JSearch', () => scanJSearch()],
+      ] as const) {
+        try {
+          results.push(await scan());
+        } catch (cause) {
+          log.warn({ source: name, err: cause instanceof Error ? cause.message : String(cause) }, 'scan failed');
+        }
       }
     }
     const found = results.reduce((sum, result) => sum + result.relevant, 0);
@@ -358,7 +421,43 @@ export async function sendWeeklyReport(now = new Date()): Promise<void> {
   log.info({ opportunities: cards.length }, 'weekly report sent');
 }
 
+/**
+ * Everything waiting, to one chat, as a list and a spreadsheet: all at once
+ * without a burst of separate messages, which WhatsApp punishes. The drip
+ * carries on afterwards with full cards.
+ */
+export async function pushAll(chatJid: string): Promise<number> {
+  if (!messenger?.connected()) throw new Error('WhatsApp is not connected');
+  const rows = await store.nextInQueue(1000);
+  const cards = rows
+    .map((row) => row.card ?? basicCard({ listingTitle: row.title, listingUrl: row.listing_url, site: siteFor(row.site_slug) }))
+    .filter((card) => !deadlinePassed(card));
+  const label = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', timeZone: env.TIMEZONE });
+  const messages = renderWeeklyReport(cards, label, new Date(), '📋 *All public-health opportunities waiting*');
+  for (const message of messages) {
+    await messenger.sendText(chatJid, message);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+  if (cards.length > 0) {
+    const csv = Buffer.from(weeklyReportCsv(cards), 'utf8');
+    await messenger.sendDocument(chatJid, csv, `public-health-opportunities-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv', 'All waiting opportunities as a table');
+  }
+  return cards.length;
+}
+
 // ── Schedule ────────────────────────────────────────────────────────────────
+
+/** The gap between cards: set by an administrator with `.alerts interval`, or the default. */
+export async function dripRange(): Promise<DripRange> {
+  return parseDripRange((await store.getState('drip')) ?? '') ?? DEFAULT_DRIP;
+}
+
+/** Change the gap, and let the next card follow the new pace. */
+export async function setDripRange(range: DripRange): Promise<void> {
+  await store.setState('drip', `${range.minMinutes}-${range.maxMinutes}`);
+  nextDripAt = Math.min(nextDripAt, Date.now() + nextDripDelayMs(range));
+}
+
 
 async function tick(): Promise<void> {
   if (ticking) return;
@@ -374,7 +473,7 @@ async function tick(): Promise<void> {
     const local = localTime(new Date(now), env.TIMEZONE);
 
     if (inDripWindow(local) && now >= nextDripAt) {
-      nextDripAt = now + nextDripDelayMs();
+      nextDripAt = now + nextDripDelayMs(await dripRange());
       await dripOnce();
     }
 
@@ -397,7 +496,7 @@ export function startTracker(): void {
   // The first scan shortly after startup; the first card after one interval,
   // so restarts never cause a burst.
   nextScanAt = Date.now() + 30_000;
-  nextDripAt = Date.now() + nextDripDelayMs();
+  nextDripAt = Date.now() + nextDripDelayMs(DEFAULT_DRIP);
   timer = setInterval(() => void tick(), 60_000);
   timer.unref();
   log.info(
@@ -420,6 +519,8 @@ export async function trackerStatus(): Promise<{
   queue: number;
   subscribers: number;
   nextDripAt: Date | null;
+  jsearch: boolean;
+  drip: DripRange;
 }> {
   return {
     enabled: env.TRACKER_ENABLED === 'on',
@@ -430,5 +531,7 @@ export async function trackerStatus(): Promise<{
     queue: await store.queueLength(),
     subscribers: (await store.subscribers()).length,
     nextDripAt: nextDripAt > 0 ? new Date(nextDripAt) : null,
+    jsearch: jsearchConfigured(),
+    drip: await dripRange(),
   };
 }

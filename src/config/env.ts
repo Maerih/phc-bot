@@ -76,6 +76,11 @@ const schema = z.object({
    */
   DEEPSEEK_API_KEY: z.string().default(''),
   DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
+  /**
+   * JSearch on RapidAPI: daily public-health job searches across the big job
+   * indexes, LinkedIn's postings included. Free plan: ~200 requests a month.
+   */
+  JSEARCH_API_KEY: z.string().default(''),
   /** Watch the listed opportunity websites and announce new public-health finds. */
   TRACKER_ENABLED: z.enum(['on', 'off']).default('on'),
   /** Minutes between checks of each site. */

@@ -105,6 +105,20 @@ const SHARE_HOSTS = /(facebook|twitter|x|linkedin|whatsapp|t|telegram|instagram|
 const NAV_TEXT =
   /^(home|next|previous|prev|more|read more|view more|see more|load more|apply now|apply|details|view details|view job|show more|login|register|sign in|sign up|contact us|about us|all jobs|browse jobs|post a job|subscribe)$/i;
 
+/**
+ * A title read from a table row carries the row's other cells: reference
+ * codes, closing dates and times, grades. Keep the words that name the job.
+ */
+export function tidyRowTitle(text: string): string {
+  return text
+    .replace(/\b\d{1,2}\/\d{1,2}\/\d{2,4}(:?\s*\d{1,2}:\d{2}(:\d{2})?\s*(AM|PM)?)?/gi, ' ')
+    .replace(/^\s*[A-Z]{1,5}[-/]?\d{3,}\s+/, '')
+    .replace(/\b[A-Z]{2,4}\s?\d{1,2}\s*$/, '')
+    .replace(/_/g, '/')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const BUTTON_WORDS = /\b(view( job)?( details)?|apply( now)?|details|read more|more info|download)\b/gi;
 
 /** Links on a listing page that look like individual opportunities. */
@@ -114,7 +128,7 @@ export function listingCandidates(html: string, pageUrl: string, max = 80): Page
     .map((link) => {
       // A "View" or "Apply Now" button: the listing's title is in its row.
       if (link.text.length >= 15 || !link.context) return link;
-      const fromRow = link.context.replace(BUTTON_WORDS, ' ').replace(/\s+/g, ' ').trim();
+      const fromRow = tidyRowTitle(link.context.replace(BUTTON_WORDS, ' '));
       return { ...link, text: fromRow.slice(0, 200) };
     })
     .filter((link) => {

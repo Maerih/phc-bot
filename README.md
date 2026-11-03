@@ -501,13 +501,17 @@ The bot watches **67 sources** — Kenyan job boards (BrighterMonday, MyJobMag, 
 | `.alerts` | Status: on or off here, sites watched, last check, how many are waiting |
 | `.alerts sites` | The list of sites |
 | `.alerts pause` / `.alerts resume` | Every chat at once (platform administrators) |
-| `.alerts check` | Check every site now (platform administrators) |
+| `.scan` | Read every site right now and report what was found (platform administrators) |
+| `.pushall` | Send everything waiting to this chat at once, as a list and a spreadsheet (admins) |
+| `.alerts interval 3-5` | How often cards go out: every 3 to 5 minutes here; any 1–120 (platform administrators) |
 
-**Schedule (Nairobi time):** Monday 3:00 AM to Friday 1:00 PM, one opportunity every 10–15 minutes. Friday 2:00 PM, the weekly report — a summary by type, the full list, and a spreadsheet (CSV) of everything found that week — then a weekend message. Nothing is sent at the weekend; sites are still checked, so Monday starts with whatever arrived.
+**Schedule (Nairobi time):** Monday 3:00 AM to Friday 1:00 PM, one opportunity every 5–8 minutes (change it with `.alerts interval`). Friday 2:00 PM, the weekly report — a summary by type, the full list, and a spreadsheet (CSV) of everything found that week — then a weekend message. Nothing is sent at the weekend; sites are still checked, so Monday starts with whatever arrived.
 
 Each opportunity arrives as a card with the position, organisation, location, salary, deadline, terms, requirements and a two-sentence summary. The link goes to the **employer's own page** whenever the listing names one, not to the job board that reposted it.
 
 **How it decides:** every 30 minutes each site's listing page is read and links not seen before are kept. On general job boards, only health-looking titles are considered. **DeepSeek** (`DEEPSEEK_API_KEY`) then picks the public-health opportunities from them, and when a card is about to go out, reads that listing's page for the details. Without a key, keyword rules decide and the card shows the title and link only. robots.txt is honoured, and sites whose terms forbid automated reading — LinkedIn, Indeed, Glassdoor, Upwork, FlexJobs — are not used. Everything found also becomes searchable through `.job`, `.scholarships` and the other search commands.
+
+**LinkedIn:** LinkedIn offers no public job-search API (its official API only lets approved partners post jobs) and its terms forbid scraping, so the bot reaches LinkedIn's postings — and those of other large job sites — through **JSearch** on RapidAPI (`JSEARCH_API_KEY`, free plan). Four public-health searches for Kenya run daily, rotating through public health, community health, health records, epidemiology, nutrition, M&E, occupational health and WASH, and DeepSeek filters the results like everything else.
 
 ### Welcome messages
 

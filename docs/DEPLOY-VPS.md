@@ -29,6 +29,7 @@ The questions on the first run:
 - **Gemini API key** (optional): turns on `.ask` and searching online when the sources find nothing. A free key: <https://aistudio.google.com/apikey>.
 - **Tavily API key** (optional): turns on live web search for scholarships and fellowships. A free key: <https://app.tavily.com>.
 - **DeepSeek API key** (optional, recommended): lets the opportunity alerts pick out public-health listings and read their details. <https://platform.deepseek.com/api_keys>.
+- **JSearch key** (optional): LinkedIn and other large job sites, searched daily for public-health jobs in Kenya. Free: <https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch> (subscribe to the free plan, copy the key).
 - **ReliefWeb app name** (optional): adds ReliefWeb's humanitarian and NGO jobs. Free: <https://apidoc.reliefweb.int/parameters#appname>.
 - **Timezone** (Enter keeps Africa/Nairobi).
 

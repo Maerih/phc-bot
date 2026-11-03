@@ -88,9 +88,14 @@ const REPORT_ORDER: OpportunityType[] = ['JOB', 'INTERNSHIP', 'FELLOWSHIP', 'SCH
  * The Friday report: everything found this week, grouped by type, split into
  * messages small enough for WhatsApp.
  */
-export function renderWeeklyReport(cards: OpportunityCard[], weekLabel: string, now = new Date()): string[] {
+export function renderWeeklyReport(
+  cards: OpportunityCard[],
+  weekLabel: string,
+  now = new Date(),
+  heading = '📊 *Weekly public-health opportunities report*',
+): string[] {
   if (cards.length === 0) {
-    return [`📊 *Weekly public-health opportunities report*\n_${weekLabel}_\n\nNo new public-health opportunities were found this week.`];
+    return [`${heading}\n_${weekLabel}_\n\nNo public-health opportunities to show.`];
   }
   const groups = new Map<OpportunityType, OpportunityCard[]>();
   for (const card of cards) groups.set(card.type, [...(groups.get(card.type) ?? []), card]);
@@ -102,10 +107,10 @@ export function renderWeeklyReport(cards: OpportunityCard[], weekLabel: string, 
     .join('\n');
 
   const header = [
-    '📊 *Weekly public-health opportunities report*',
+    heading,
     `_${weekLabel}_`,
     '',
-    `*${cards.length}* opportunities found this week:`,
+    `*${cards.length}* opportunities:`,
     summary,
     '',
     'The full table is attached as a spreadsheet.',

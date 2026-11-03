@@ -12,7 +12,8 @@ import { env, isAiConfigured } from './config/env.js';
 import { logger } from './core/logger.js';
 import { assertDatabaseReachable, closeDatabase, runMigrations } from './db/client.js';
 import { startHttpServer } from './http/server.js';
-import { startWhatsApp, stopWhatsApp } from './whatsapp/client.js';
+import { startWhatsApp, stopWhatsApp, trackerMessenger } from './whatsapp/client.js';
+import { setMessenger, startTracker, stopTracker } from './tracker/service.js';
 import { acquireSessionLock } from './whatsapp/session-lock.js';
 import { activeConnectors } from './sources/registry.js';
 import { flushPersistence } from './search/search.service.js';
@@ -57,6 +58,8 @@ async function main(): Promise<void> {
   await runMigrations();
   httpServer = await startHttpServer();
   await startWhatsApp();
+  setMessenger(trackerMessenger);
+  startTracker();
 
   log.info('startup complete');
 }
@@ -70,6 +73,7 @@ async function shutdown(signal: string): Promise<void> {
     httpServer.close(() => resolve());
   });
 
+  stopTracker();
   await Promise.allSettled([stopWhatsApp(), closeHttp]);
   // Discovered opportunities are written in the background; finish those
   // writes before the pool closes, or they are lost.

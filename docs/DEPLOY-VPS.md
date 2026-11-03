@@ -28,7 +28,11 @@ The questions on the first run:
 - **Admin WhatsApp number(s):** country code first, digits only, for example `254712345678`. Admins can run every command, including group moderation.
 - **Gemini API key** (optional): turns on `.ask` and searching online when the sources find nothing. A free key: <https://aistudio.google.com/apikey>.
 - **Tavily API key** (optional): turns on live web search for scholarships and fellowships. A free key: <https://app.tavily.com>.
+- **DeepSeek API key** (optional, recommended): lets the opportunity alerts pick out public-health listings and read their details. <https://platform.deepseek.com/api_keys>.
+- **ReliefWeb app name** (optional): adds ReliefWeb's humanitarian and NGO jobs. Free: <https://apidoc.reliefweb.int/parameters#appname>.
 - **Timezone** (Enter keeps Africa/Nairobi).
+
+After pairing, send `.alerts on` in each group (as a group admin) or chat that should receive opportunity updates.
 
 Keys are typed hidden, and `.env` is readable only by you. Answer again any time with `./ctl.sh setup`.
 

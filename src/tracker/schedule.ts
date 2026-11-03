@@ -1,0 +1,77 @@
+/**
+ * When the tracker talks to members, in the community's own timezone:
+ *
+ *   Monday 03:00 → Friday 13:00   one opportunity every 10–15 minutes
+ *   Friday 14:00                  the weekly report, then a weekend message
+ *   the weekend                   silence (scanning continues quietly)
+ */
+
+export interface LocalTime {
+  /** 1 = Monday … 7 = Sunday */
+  weekday: number;
+  hour: number;
+  minute: number;
+  /** YYYY-MM-DD in the local timezone. */
+  date: string;
+}
+
+const WEEKDAYS: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
+
+export function localTime(now: Date, timeZone: string): LocalTime {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      weekday: 'short',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(now)
+      .map((part) => [part.type, part.value]),
+  );
+  return {
+    weekday: WEEKDAYS[parts.weekday ?? ''] ?? 1,
+    hour: Number(parts.hour),
+    minute: Number(parts.minute),
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+  };
+}
+
+const minutes = (t: LocalTime): number => t.hour * 60 + t.minute;
+
+/** Monday 03:00 up to (not including) Friday 13:00. */
+export function inDripWindow(t: LocalTime): boolean {
+  if (t.weekday === 1) return minutes(t) >= 3 * 60;
+  if (t.weekday >= 2 && t.weekday <= 4) return true;
+  if (t.weekday === 5) return minutes(t) < 13 * 60;
+  return false;
+}
+
+/** Friday from 14:00 until midnight: when the weekly report goes out. */
+export function isReportTime(t: LocalTime): boolean {
+  return t.weekday === 5 && t.hour >= 14;
+}
+
+/** The Monday that starts this local week, as YYYY-MM-DD: the report's key. */
+export function weekStart(t: LocalTime): string {
+  const date = new Date(`${t.date}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - (t.weekday - 1));
+  return date.toISOString().slice(0, 10);
+}
+
+/** The next gap between two opportunities: 10 to 15 minutes. */
+export function nextDripDelayMs(random: () => number = Math.random): number {
+  return Math.round((10 + random() * 5) * 60_000);
+}
+
+export function weekLabel(startIso: string): string {
+  const start = new Date(`${startIso}T00:00:00Z`);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 4);
+  const format = (date: Date): string =>
+    date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  return `Week of ${format(start)} – ${format(end)}`;
+}

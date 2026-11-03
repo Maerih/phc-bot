@@ -20,6 +20,7 @@ import { jobicyConnector } from './jobs/jobicy.js';
 import { remoteOkConnector } from './jobs/remoteok.js';
 import { reliefwebConnector } from './jobs/reliefweb.js';
 import { remotiveConnector } from './jobs/remotive.js';
+import { trackedSitesConnector } from './tracked/connector.js';
 import type { SearchQuery, SourceConnector, SourceResult } from './types.js';
 
 const log = logger.child({ component: 'sources' });
@@ -35,6 +36,7 @@ export const ALL_CONNECTORS: readonly SourceConnector[] = [
   jobicyConnector,
   remoteOkConnector,
   reliefwebConnector,
+  trackedSitesConnector,
 ];
 
 /**
@@ -58,6 +60,11 @@ function cacheKey(slug: string, query: SearchQuery): string {
 /** Connectors the operator enabled that are also actually usable. */
 export function activeConnectors(): SourceConnector[] {
   const enabled = new Set(env.SOURCES_ENABLED);
+  // The tracker's finds are searchable whenever the tracker runs, without
+  // having to be added to SOURCES_ENABLED on servers set up before it existed.
+  if (env.TRACKER_ENABLED === 'on') enabled.add(trackedSitesConnector.meta.slug);
+  // Likewise ReliefWeb, as soon as its approved app name is configured.
+  if (env.RELIEFWEB_APPNAME.trim().length > 0) enabled.add(reliefwebConnector.meta.slug);
   return ALL_CONNECTORS.filter((connector) => enabled.has(connector.meta.slug));
 }
 

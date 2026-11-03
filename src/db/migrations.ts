@@ -37,4 +37,36 @@ export const MIGRATIONS: readonly Migration[] = [
         ON public.member_silences (group_jid, member_jid);
     `,
   },
+  {
+    name: '0002_site_tracker',
+    sql: `
+      CREATE TABLE IF NOT EXISTS public.tracked_items (
+        url_hash text PRIMARY KEY,
+        site_slug text NOT NULL,
+        listing_url text NOT NULL,
+        title text NOT NULL,
+        relevant boolean NOT NULL DEFAULT false,
+        seeded boolean NOT NULL DEFAULT false,
+        card jsonb,
+        skipped boolean NOT NULL DEFAULT false,
+        first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+        announced_at timestamp with time zone
+      );
+      CREATE INDEX IF NOT EXISTS tracked_items_queue_idx
+        ON public.tracked_items (relevant, announced_at, first_seen_at DESC);
+      CREATE INDEX IF NOT EXISTS tracked_items_site_idx ON public.tracked_items (site_slug);
+
+      CREATE TABLE IF NOT EXISTS public.alert_subscriptions (
+        chat_jid text PRIMARY KEY,
+        created_by text NOT NULL,
+        created_at timestamp with time zone DEFAULT now() NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS public.tracker_state (
+        key text PRIMARY KEY,
+        value text NOT NULL,
+        updated_at timestamp with time zone DEFAULT now() NOT NULL
+      );
+    `,
+  },
 ];

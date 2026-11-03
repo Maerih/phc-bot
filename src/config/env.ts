@@ -64,11 +64,22 @@ const schema = z.object({
   // Gemini is the default: Google AI Studio issues a free key with a usable
   // free tier and built-in search grounding, so the AI features work without
   // a billing account. The others stay available for later.
-  AI_PROVIDER: z.enum(['gemini', 'anthropic', 'openai', 'none']).default('gemini'),
+  AI_PROVIDER: z.enum(['gemini', 'anthropic', 'openai', 'deepseek', 'none']).default('gemini'),
   GEMINI_API_KEY: z.string().default(''),
   GEMINI_MODEL: z.string().default('gemini-3.8-flash'),
   ANTHROPIC_API_KEY: z.string().default(''),
   ANTHROPIC_MODEL: z.string().default('claude-opus-5'),
+  /**
+   * DeepSeek: used by the site tracker to pick public-health listings out of
+   * what it finds, whatever AI_PROVIDER answers .ask. Also selectable as the
+   * main provider with AI_PROVIDER=deepseek.
+   */
+  DEEPSEEK_API_KEY: z.string().default(''),
+  DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
+  /** Watch the listed opportunity websites and announce new public-health finds. */
+  TRACKER_ENABLED: z.enum(['on', 'off']).default('on'),
+  /** Minutes between checks of each site. */
+  TRACKER_INTERVAL_MINUTES: z.coerce.number().int().min(10).max(1440).default(30),
   OPENAI_API_KEY: z.string().default(''),
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),
 
@@ -109,5 +120,6 @@ export function isAiConfigured(): boolean {
   if (env.AI_PROVIDER === 'gemini') return env.GEMINI_API_KEY.length > 0;
   if (env.AI_PROVIDER === 'anthropic') return env.ANTHROPIC_API_KEY.length > 0;
   if (env.AI_PROVIDER === 'openai') return env.OPENAI_API_KEY.length > 0;
+  if (env.AI_PROVIDER === 'deepseek') return env.DEEPSEEK_API_KEY.length > 0;
   return false;
 }

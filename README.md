@@ -490,6 +490,25 @@ Each rule's action: `warn` warns the sender; `delete` (what `on` means) deletes 
 
 The advert rules are tuned for an opportunities community: posts mentioning scholarships, vacancies, deadlines or stipends get the benefit of the doubt, so a stipend amount or an application link alone never triggers them. Use `.mod test` to check a borderline post before turning a rule on.
 
+### Opportunity alerts
+
+The bot watches **67 sources** — Kenyan job boards (BrighterMonday, MyJobMag, Fuzu, Work Kenya, VacancyKE, JobWeb Kenya and more), government portals (PSC, Government Advertising Agency, Ministry of Health, KMTC, KEMRI's e-recruitment portal, KNH, MTRH), health research and NGO employers (KEMRI-Wellcome, APHRC, Amref, Kenya Red Cross, Living Goods, PATH, Africa CDC), the UN and development banks, ReliefWeb, and scholarship, fellowship, grant and volunteering sites — and posts the **public-health** ones to every chat that asks for them: community health, health records and information, population health, occupational health and safety, epidemiology, nutrition, WASH, health promotion, M&E and research in health programmes, and related scholarships, fellowships, grants, internships and volunteering.
+
+| Command | Does |
+|---|---|
+| `.alerts on` | Start updates in this chat (in a group: group admins) |
+| `.alerts off` | Stop them |
+| `.alerts` | Status: on or off here, sites watched, last check, how many are waiting |
+| `.alerts sites` | The list of sites |
+| `.alerts pause` / `.alerts resume` | Every chat at once (platform administrators) |
+| `.alerts check` | Check every site now (platform administrators) |
+
+**Schedule (Nairobi time):** Monday 3:00 AM to Friday 1:00 PM, one opportunity every 10–15 minutes. Friday 2:00 PM, the weekly report — a summary by type, the full list, and a spreadsheet (CSV) of everything found that week — then a weekend message. Nothing is sent at the weekend; sites are still checked, so Monday starts with whatever arrived.
+
+Each opportunity arrives as a card with the position, organisation, location, salary, deadline, terms, requirements and a two-sentence summary. The link goes to the **employer's own page** whenever the listing names one, not to the job board that reposted it.
+
+**How it decides:** every 30 minutes each site's listing page is read and links not seen before are kept. On general job boards, only health-looking titles are considered. **DeepSeek** (`DEEPSEEK_API_KEY`) then picks the public-health opportunities from them, and when a card is about to go out, reads that listing's page for the details. Without a key, keyword rules decide and the card shows the title and link only. robots.txt is honoured, and sites whose terms forbid automated reading — LinkedIn, Indeed, Glassdoor, Upwork, FlexJobs — are not used. Everything found also becomes searchable through `.job`, `.scholarships` and the other search commands.
+
 ### Welcome messages
 
 `.welcome on` greets everyone who joins: added by an admin, through an invite link, by approved request, or from the community. Without a custom message it uses a standard one that introduces the community and points to `.menu`.

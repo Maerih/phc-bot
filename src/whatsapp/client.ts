@@ -781,3 +781,23 @@ export async function stopWhatsApp(): Promise<void> {
     releaseSessionLock(env.WHATSAPP_AUTH_DIR);
   }
 }
+
+/**
+ * Sending to any chat, for the site tracker's alerts and reports. Our own
+ * sends are remembered so their echoes are never handled as commands.
+ */
+export const trackerMessenger = {
+  connected(): boolean {
+    return socket !== null && status.connected;
+  },
+  async sendText(chatJid: string, text: string): Promise<void> {
+    if (!socket) throw new Error('WhatsApp is not connected');
+    const sent = await socket.sendMessage(chatJid, { text });
+    rememberSent(sent?.key?.id);
+  },
+  async sendDocument(chatJid: string, data: Buffer, fileName: string, mimetype: string, caption?: string): Promise<void> {
+    if (!socket) throw new Error('WhatsApp is not connected');
+    const sent = await socket.sendMessage(chatJid, { document: data, fileName, mimetype, ...(caption ? { caption } : {}) });
+    rememberSent(sent?.key?.id);
+  },
+};

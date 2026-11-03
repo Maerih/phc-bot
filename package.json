@@ -2,7 +2,7 @@
   "name": "phc-platform",
   "version": "1.0.0",
   "private": true,
-  "description": "Public Health Colosseum — AI-powered opportunity and community intelligence platform. Release 1.0 \"Neo\". Powered by SCIAT SOLUTIONS.",
+  "description": "Public Health Colosseum \u2014 AI-powered opportunity and community intelligence platform. Release 1.0 \"Neo\". Powered by SCIAT SOLUTIONS.",
   "type": "module",
   "engines": {
     "node": ">=20.0.0"
@@ -20,7 +20,8 @@
     "db:studio": "drizzle-kit studio",
     "check": "npm run typecheck && npm run test",
     "search": "tsx src/cli/search.ts",
-    "ai:check": "tsx src/cli/ai-check.ts"
+    "ai:check": "tsx src/cli/ai-check.ts",
+    "tracker:check": "tsx src/cli/tracker-check.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

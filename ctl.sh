@@ -694,6 +694,22 @@ run_setup() {
 	fi
 
 	say ""
+	say "  Opportunity alerts: DeepSeek reads the job sites and picks out public-health"
+	say "  opportunities. Get a key at https://platform.deepseek.com/api_keys"
+	hint="Enter to skip"
+	[ -n "$(env_value DEEPSEEK_API_KEY)" ] && hint="Enter keeps the current key"
+	key="$(ask_secret "DeepSeek API key ($hint; typing is hidden)")"
+	if [ -n "$key" ]; then set_env DEEPSEEK_API_KEY "$key"; fi
+
+	say ""
+	say "  ReliefWeb: humanitarian and NGO jobs. Needs a free app name from"
+	say "  https://apidoc.reliefweb.int/parameters#appname"
+	hint="Enter to skip"
+	[ -n "$(env_value RELIEFWEB_APPNAME)" ] && hint="Enter keeps the current one"
+	key="$(ask "ReliefWeb app name ($hint)" "")"
+	if [ -n "$key" ]; then set_env RELIEFWEB_APPNAME "$key"; fi
+
+	say ""
 	tz="$(ask "Timezone for dates and deadlines" "$(env_value TIMEZONE)")"
 	[ -n "$tz" ] && set_env TIMEZONE "$tz"
 	say ""
@@ -716,6 +732,20 @@ check_gemini_key() {
 	esac
 }
 
+# Is the DeepSeek key real? Listing models is free.
+check_deepseek_key() {
+	local code
+	code="$(curl -s -o /dev/null -w '%{http_code}' -m 15 \
+		-H @<(printf 'Authorization: Bearer %s\n' "$1") \
+		'https://api.deepseek.com/models' 2>/dev/null || true)"
+	case "$code" in
+		200) ok "Opportunity alerts: DeepSeek picks the public-health listings (key accepted)" ;;
+		401 | 403) problem "DeepSeek rejected DEEPSEEK_API_KEY (HTTP $code). New key: https://platform.deepseek.com/api_keys, then ./ctl.sh setup" ;;
+		000 | "") note "Opportunity alerts: DeepSeek (could not reach it to check the key)" ;;
+		*) note "Opportunity alerts: DeepSeek (the key check answered HTTP $code)" ;;
+	esac
+}
+
 # What is switched on, so nobody wonders why .ask says the assistant is off.
 report_features() {
 	local provider key
@@ -735,6 +765,13 @@ report_features() {
 			;;
 		*) problem "AI_PROVIDER=$provider is not one of: gemini, anthropic, openai, none" ;;
 	esac
+	key="$(env_value DEEPSEEK_API_KEY)"
+	if [ -n "$key" ]; then
+		check_deepseek_key "$key"
+	else
+		note "Opportunity alerts: keyword matching only — a DeepSeek key makes them smarter: ./ctl.sh setup"
+	fi
+	if [ -n "$(env_value RELIEFWEB_APPNAME)" ]; then ok "ReliefWeb jobs: on"; else note "ReliefWeb jobs: off (needs RELIEFWEB_APPNAME: ./ctl.sh setup)"; fi
 	case "$(env_value WEB_SEARCH_PROVIDER)" in
 		tavily)
 			if [ -n "$(env_value TAVILY_API_KEY)" ]; then ok "Live web search: Tavily"; else note "Live web search: off — TAVILY_API_KEY is empty"; fi
@@ -1206,7 +1243,11 @@ cmd_doctor() {
 	fi
 
 	step "Bot"
-	if [ -d "$ROOT/.git" ] && git -C "$ROOT" fetch -q 2>/dev/null; then
+	# Never wait for a password or host-key prompt: a check must not hang.
+	if [ -d "$ROOT/.git" ] &&
+		GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=true SSH_ASKPASS=true \
+			GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=10" \
+			timeout 30 git -C "$ROOT" fetch -q </dev/null 2>/dev/null; then
 		local behind
 		behind="$(git -C "$ROOT" rev-list --count 'HEAD..@{upstream}' 2>/dev/null || echo 0)"
 		if [ "$behind" -gt 0 ]; then note "$behind newer change(s) on GitHub; ./ctl.sh update installs them"; else ok "Up to date with GitHub"; fi

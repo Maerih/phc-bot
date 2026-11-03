@@ -107,7 +107,7 @@ export const reliefwebConnector: SourceConnector = {
     const parts: string[] = [
       `appname=${encodeURIComponent(appname)}`,
       'profile=list',
-      `limit=${Math.min(100, Math.max(10, query.limit * 4))}`,
+      'limit=100',
       'sort[]=date.created:desc',
     ];
     for (const field of [
@@ -117,9 +117,20 @@ export const reliefwebConnector: SourceConnector = {
     ]) {
       parts.push(`fields[include][]=${encodeURIComponent(field)}`);
     }
-    if (query.terms.trim().length > 0) {
+    // A country has few enough postings (Kenya: under 100) to fetch them all
+    // and let the ranker apply the member's words; ReliefWeb's own AND
+    // matching of "public health" finds almost nothing. Without a country,
+    // the words narrow the search, loosely.
+    const iso3 = query.countries
+      .map((iso2) => Object.entries(ISO3_TO_ISO2).find(([, two]) => two === iso2.toUpperCase())?.[0])
+      .filter((code): code is string => code !== undefined);
+    if (iso3.length > 0) {
+      parts.push('filter[field]=country.iso3');
+      for (const code of iso3) parts.push(`filter[value][]=${code}`);
+      parts.push('filter[operator]=OR');
+    } else if (query.terms.trim().length > 0) {
       parts.push(`query[value]=${encodeURIComponent(query.terms.trim())}`);
-      parts.push('query[operator]=AND');
+      parts.push('query[operator]=OR');
     }
 
     const payload = await getJson<ReliefWebResponse>(`${ENDPOINT}?${parts.join('&')}`, {

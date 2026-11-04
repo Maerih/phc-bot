@@ -963,6 +963,8 @@ running() { [ "$(docker container inspect -f '{{.State.Running}}' "$1" 2>/dev/nu
 #   "init process complete"     — fresh volume, just initialised
 #   "Skipping initialization"   — existing volume, no temporary server at all
 wait_for_db() {
+	# Already up (e.g. running for days, its start-up lines rotated out of the log).
+	docker exec "$DB" psql -U phc -d phc -tAc 'select 1' >/dev/null 2>&1 && return 0
 	local settled=0
 	for _ in $(seq 1 120); do
 		if docker logs "$DB" 2>&1 | grep -qE 'init process complete|Skipping initialization'; then

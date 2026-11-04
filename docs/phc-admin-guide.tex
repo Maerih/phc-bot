@@ -110,7 +110,7 @@ In nano: change the line, then Ctrl-O, Enter to save, Ctrl-X to exit. Each setti
 
 \begin{settings}
 \cmd{ADMIN\_NUMBERS} & Admin WhatsApp numbers, country code first, commas between: \cmd{254712345678,254798765432} & --- \\
-\cmd{DEEPSEEK\_API\_KEY} & The AI: \cmd{.ask}, AI search, choosing which jobs go out in alerts & platform.deepseek.com/ api\_keys \\
+\cmd{DEEPSEEK\_API\_KEY} & The AI: \cmd{.ask}, AI search, choosing which jobs go out in alerts, and the CV and application assistant (needed for it) & platform.deepseek.com/ api\_keys \\
 \cmd{TAVILY\_API\_KEY} & Web search for \cmd{.ask} and the search commands. Also set \cmd{WEB\_SEARCH\_PROVIDER=tavily} (setup does this). & app.tavily.com (free plan) \\
 \cmd{JSEARCH\_API\_KEY} & LinkedIn and other big job sites, searched daily & rapidapi.com $\rightarrow$ JSearch $\rightarrow$ free plan \\
 \cmd{RELIEFWEB\_APPNAME} & ReliefWeb NGO, UN and humanitarian jobs & apidoc.reliefweb.int \\
@@ -146,6 +146,26 @@ Sent from a number in \cmd{ADMIN\_NUMBERS}:
 \cmd{.alerts pause} / \cmd{.alerts resume} & Stop or restart alerts in every chat at once \\
 \cmd{.ping} & Is the bot alive? \\
 \end{commands}
+
+\subsection{Bot number switches}
+
+All are \textbf{off} until you turn them on, with \cmd{on} or \cmd{off} after the name. They act for the bot's own WhatsApp number.
+
+\begin{commands}
+\cmd{.autoview on} & View contacts' status updates automatically \\
+\cmd{.autolike on} & React \textcolor{phgreen}{\(\heartsuit\)} to contacts' status updates \\
+\cmd{.alwaysonline on} & Show the bot as online all the time \\
+\cmd{.recording on} & Show ``recording audio\ldots'' instead of ``typing\ldots'' while the bot works on a reply \\
+\cmd{.contacts} & Everyone who has messaged the bot, as one contacts file to save on a phone in one tap \\
+\end{commands}
+
+\begin{tip}
+\textbf{Use sparingly.} WhatsApp can limit numbers that look automated; \cmd{alwaysonline} and \cmd{autolike} are the most noticeable. Saving deleted messages is deliberately not offered: members delete messages on purpose.
+\end{tip}
+
+\subsection{Career assistant}
+
+Members chat privately with the bot to build CVs and prepare applications; see the User Guide. It needs \cmd{DEEPSEEK\_API\_KEY}; \cmd{TAVILY\_API\_KEY} lets it find the official application page. CVs are made as PDF and Word files inside the bot's container (it includes a browser for this), stored in the database, and deleted together with the member's profile after 12 months without use or when they send \cmd{delete my data}. Email applications are prepared for the member to send; simple online forms are filled only after the member checks a screenshot and replies \cmd{confirm}. No mailbox or passwords are stored.
 
 \textbf{Alert schedule (Nairobi time):} Monday 3:00 AM -- Friday 1:00 PM, a card every few minutes; Friday 2:00 PM the weekly report and spreadsheet, then the weekend message; nothing at the weekend. Group-management and moderation commands are in the User Guide.
 

@@ -33,6 +33,8 @@ import { resetWarnsCommand, warnCommand, warningsCommand } from './group/warn.js
 import { groupInfoCommand } from './group/info.js';
 import { askCommand } from './ai/ask.js';
 import { alertsCommand, pushAllCommand, scanCommand } from './alerts/alerts.js';
+import { applicationsCommand, applyCommand, cvCommand, deleteDataCommand, profileCommand } from './career/career.js';
+import { contactsCommand, ownerSwitchCommands } from './admin/owner.js';
 import {
   conferencesCommand,
   eventsCommand,
@@ -94,8 +96,16 @@ const COMMANDS: readonly Command[] = [
   alertsCommand,
   scanCommand,
   pushAllCommand,
-  // assistant
+  // assistant and careers
   askCommand,
+  cvCommand,
+  profileCommand,
+  applyCommand,
+  applicationsCommand,
+  deleteDataCommand,
+  // owner
+  ...ownerSwitchCommands,
+  contactsCommand,
   // result navigation
   nextCommand,
   prevCommand,

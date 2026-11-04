@@ -35,6 +35,27 @@ export interface InboundMessage {
   text: string;
   /** JIDs mentioned in the message, if any. */
   mentionedJids?: string[];
+  /**
+   * Plain text (not a command) may go to the conversational assistant. False
+   * for anything the account itself sent to other people.
+   */
+  conversational?: boolean;
+  /** The sender's WhatsApp display name, when known. */
+  pushName?: string | null;
+}
+
+export type ConversationHandler = (input: {
+  message: InboundMessage;
+  transport: Transport;
+  member: import('../db/schema.js').MemberRow;
+  isAdmin: boolean;
+}) => Promise<void>;
+
+let conversationHandler: ConversationHandler | null = null;
+
+/** Who answers plain messages in private chats (the career assistant). */
+export function setConversationHandler(handler: ConversationHandler): void {
+  conversationHandler = handler;
 }
 
 export interface Transport {
@@ -46,6 +67,8 @@ export interface Transport {
   selfJid?: string | null;
   /** The bot's own anonymous id (`…@lid`), when known. */
   selfLid?: string | null;
+  /** Show "typing…" (or "recording…") while a slow reply is prepared. */
+  busy?(chatJid: string): Promise<void>;
 }
 
 /** A message is a command only when it starts with the configured prefix. */
@@ -72,7 +95,20 @@ export function parseInvocation(text: string): { name: string; args: string } | 
  */
 export async function handleMessage(message: InboundMessage, transport: Transport): Promise<boolean> {
   const invocation = parseInvocation(message.text);
-  if (!invocation) return false;
+  if (!invocation) {
+    // Plain words in a private chat: the assistant. In groups, plain chatter
+    // is never answered.
+    if (message.isGroup || message.conversational !== true || !conversationHandler) return false;
+    let member;
+    try {
+      member = await touchMember(message.senderJid, message.pushName);
+    } catch {
+      return false;
+    }
+    if (member.isBlocked) return false;
+    await conversationHandler({ message, transport, member, isAdmin: member.isAdmin && isConfiguredAdmin(message.senderJid) });
+    return true;
+  }
 
   const command = findCommand(invocation.name);
   if (!command) {
@@ -91,7 +127,7 @@ export async function handleMessage(message: InboundMessage, transport: Transpor
 
   let member;
   try {
-    member = await touchMember(message.senderJid);
+    member = await touchMember(message.senderJid, message.pushName);
   } catch (cause) {
     commandLog.error({ err: cause instanceof Error ? cause.message : String(cause) }, 'member lookup failed');
     await transport.sendText(message.chatJid, '⚠️ The service is briefly unavailable. Please try again shortly.');

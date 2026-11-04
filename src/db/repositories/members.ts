@@ -29,16 +29,17 @@ export function isConfiguredAdmin(jid: string): boolean {
  * `isAdmin` is re-synced from config on every contact so removing a number
  * from ADMIN_NUMBERS takes effect immediately.
  */
-export async function touchMember(jid: string): Promise<MemberRow> {
+export async function touchMember(jid: string, displayName?: string | null): Promise<MemberRow> {
   const admin = isConfiguredAdmin(jid);
   const now = new Date();
+  const name = displayName?.trim().slice(0, 80) || undefined;
 
   const [row] = await db
     .insert(members)
-    .values({ waJid: jid, isAdmin: admin, lastSeenAt: now })
+    .values({ waJid: jid, isAdmin: admin, lastSeenAt: now, ...(name ? { displayName: name } : {}) })
     .onConflictDoUpdate({
       target: members.waJid,
-      set: { lastSeenAt: now, isAdmin: admin, updatedAt: now },
+      set: { lastSeenAt: now, isAdmin: admin, updatedAt: now, ...(name ? { displayName: name } : {}) },
     })
     .returning();
 

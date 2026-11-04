@@ -91,3 +91,58 @@ export function createDeepSeekProvider(): AiProvider {
     },
   };
 }
+
+// ── Tool calling, for the career assistant ──────────────────────────────────
+
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+export type ChatMessage =
+  | { role: 'system' | 'user'; content: string }
+  | { role: 'assistant'; content: string | null; tool_calls?: ToolCall[] }
+  | { role: 'tool'; tool_call_id: string; content: string };
+
+export interface ToolCall {
+  id: string;
+  type: 'function';
+  function: { name: string; arguments: string };
+}
+
+/** One DeepSeek turn that may ask for tools. Returns its text and any tool calls. */
+export async function deepseekChat(messages: ChatMessage[], tools: ToolDefinition[], maxTokens = 1200): Promise<{ content: string; toolCalls: ToolCall[] }> {
+  const apiKey = env.DEEPSEEK_API_KEY.trim();
+  if (!apiKey) throw new AiError('NOT_CONFIGURED', 'DEEPSEEK_API_KEY is not set');
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: env.DEEPSEEK_MODEL,
+          messages,
+          tools: tools.map((tool) => ({ type: 'function', function: tool })),
+          max_tokens: maxTokens,
+          stream: false,
+        }),
+        signal: AbortSignal.timeout(120_000),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        choices?: Array<{ message?: { content?: string | null; tool_calls?: ToolCall[] } }>;
+        error?: { message?: string };
+      };
+      if (!response.ok) throw classify(response.status, payload.error?.message ?? response.statusText);
+      const message = payload.choices?.[0]?.message;
+      return { content: message?.content?.trim() ?? '', toolCalls: message?.tool_calls ?? [] };
+    } catch (cause) {
+      lastError = cause;
+      const retryable = cause instanceof AiError ? cause.retryable : true;
+      if (!retryable || attempt === MAX_ATTEMPTS) break;
+      await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new AiError('UNKNOWN', String(lastError));
+}

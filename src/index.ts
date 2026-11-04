@@ -12,7 +12,11 @@ import { env, isAiConfigured } from './config/env.js';
 import { logger } from './core/logger.js';
 import { assertDatabaseReachable, closeDatabase, runMigrations } from './db/client.js';
 import { startHttpServer } from './http/server.js';
-import { startWhatsApp, stopWhatsApp, trackerMessenger } from './whatsapp/client.js';
+import { setDocumentHandler, startWhatsApp, stopWhatsApp, trackerMessenger } from './whatsapp/client.js';
+import { setConversationHandler } from './commands/router.js';
+import { converse, receiveDocument, startRetention } from './career/entry.js';
+import { setCareerMessenger } from './career/messenger.js';
+import { closeBrowser } from './career/browser.js';
 import { setMessenger, startTracker, stopTracker } from './tracker/service.js';
 import { acquireSessionLock } from './whatsapp/session-lock.js';
 import { activeConnectors } from './sources/registry.js';
@@ -57,9 +61,13 @@ async function main(): Promise<void> {
   await assertDatabaseReachable();
   await runMigrations();
   httpServer = await startHttpServer();
+  setConversationHandler(converse);
+  setDocumentHandler(receiveDocument);
+  setCareerMessenger(trackerMessenger);
   await startWhatsApp();
   setMessenger(trackerMessenger);
   startTracker();
+  startRetention();
 
   log.info('startup complete');
 }
@@ -74,6 +82,7 @@ async function shutdown(signal: string): Promise<void> {
   });
 
   stopTracker();
+  await closeBrowser().catch(() => undefined);
   await Promise.allSettled([stopWhatsApp(), closeHttp]);
   // Discovered opportunities are written in the background; finish those
   // writes before the pool closes, or they are lost.

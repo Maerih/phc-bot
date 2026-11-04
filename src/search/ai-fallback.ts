@@ -16,7 +16,7 @@ import { logger } from '../core/logger.js';
 import { normalizeMany, safeUrl, type NormalizedOpportunity } from '../domain/normalize.js';
 import type { OpportunityType, RawOpportunity } from '../domain/opportunity.js';
 import { OPPORTUNITY_TYPES } from '../domain/opportunity.js';
-import { getAiProvider } from '../ai/router.js';
+import { getAiProvider, getAssistantProvider } from '../ai/router.js';
 import { TtlCache } from '../core/cache.js';
 import { AiError } from '../ai/provider.js';
 import { getWebSearchProvider, usesProviderGrounding } from './web/router.js';
@@ -248,13 +248,16 @@ export async function aiWebFallback(query: SearchQuery, now = new Date()): Promi
 }
 
 async function aiWebFallbackUncached(query: SearchQuery, now: Date): Promise<AiFallbackResult> {
-  const provider = getAiProvider();
+  const webSearch = getWebSearchProvider();
+  const grounding = usesProviderGrounding();
+  // DeepSeek by default; when search is grounded in the provider itself
+  // (Gemini), use the provider that can do it.
+  const preferred = getAssistantProvider();
+  const provider = grounding && !preferred?.supportsWebSearch ? getAiProvider() : preferred;
 
   if (!provider) {
     return { opportunities: [], skippedReason: 'no AI provider configured' };
   }
-  const webSearch = getWebSearchProvider();
-  const grounding = usesProviderGrounding();
 
   if (!webSearch && !grounding) {
     return {

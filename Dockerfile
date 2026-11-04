@@ -21,6 +21,15 @@ FROM node:22-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production
 
+# Chromium renders CVs and cover letters to PDF and fills simple application
+# forms; the fonts make documents look the same as in Word. Debian's own
+# packages: nothing downloaded from elsewhere.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends chromium fonts-liberation fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/*
+ENV CHROMIUM_PATH=/usr/bin/chromium \
+    HOME=/tmp
+
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund \
  && npm cache clean --force

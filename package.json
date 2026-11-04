@@ -2,7 +2,7 @@
   "name": "phc-platform",
   "version": "1.0.0",
   "private": true,
-  "description": "Public Health Colosseum \u2014 AI-powered opportunity and community intelligence platform. Release 1.0 \"Neo\". Powered by SCIAT SOLUTIONS.",
+  "description": "Public Health Colosseum — AI-powered opportunity and community intelligence platform. Release 1.0 \"Neo\". Powered by SCIAT SOLUTIONS.",
   "type": "module",
   "engines": {
     "node": ">=20.0.0"
@@ -29,13 +29,17 @@
     "@hapi/boom": "^10.0.1",
     "@types/qrcode": "^1.5.6",
     "@whiskeysockets/baileys": "^6.7.9",
+    "docx": "^9.15.2",
     "dotenv": "^17.0.0",
     "drizzle-orm": "^0.45.3",
     "express": "^5.0.0",
+    "mammoth": "^1.13.0",
     "pino": "^9.5.0",
+    "playwright-core": "^1.64.1",
     "postgres": "^3.4.5",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
+    "unpdf": "^2.1.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

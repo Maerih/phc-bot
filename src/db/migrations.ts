@@ -103,4 +103,74 @@ export const MIGRATIONS: readonly Migration[] = [
         WHERE announced_at IS NULL AND relevant AND NOT skipped;
     `,
   },
+  {
+    name: '0004_career_assistant',
+    sql: `
+      -- A member's professional profile, kept so CVs and applications do
+      -- not need the same details every time. Stored only after consent.
+      CREATE TABLE IF NOT EXISTS public.member_profiles (
+        member_id uuid PRIMARY KEY REFERENCES public.members(id) ON DELETE CASCADE,
+        profile jsonb DEFAULT '{}'::jsonb NOT NULL,
+        consent_at timestamp with time zone,
+        created_at timestamp with time zone DEFAULT now() NOT NULL,
+        updated_at timestamp with time zone DEFAULT now() NOT NULL,
+        last_active_at timestamp with time zone DEFAULT now() NOT NULL
+      );
+
+      -- CVs, cover letters and documents members send. Kept in the database
+      -- so they are covered by backups and never served from a public path.
+      CREATE TABLE IF NOT EXISTS public.member_documents (
+        id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+        member_id uuid NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
+        kind text NOT NULL,
+        title text NOT NULL,
+        file_name text NOT NULL,
+        mime text NOT NULL,
+        bytes bytea NOT NULL,
+        meta jsonb DEFAULT '{}'::jsonb NOT NULL,
+        created_at timestamp with time zone DEFAULT now() NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS member_documents_member_idx ON public.member_documents (member_id, created_at DESC);
+
+      -- Applications prepared for a member, one per opportunity.
+      CREATE TABLE IF NOT EXISTS public.applications (
+        id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+        member_id uuid NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
+        number integer NOT NULL,
+        opportunity_key text NOT NULL,
+        opportunity jsonb NOT NULL,
+        channel text DEFAULT 'unknown' NOT NULL,
+        channel_detail jsonb DEFAULT '{}'::jsonb NOT NULL,
+        suitability jsonb DEFAULT '{}'::jsonb NOT NULL,
+        email_subject text,
+        email_body text,
+        cover_letter text,
+        cv_document_id uuid REFERENCES public.member_documents(id) ON DELETE SET NULL,
+        letter_document_id uuid REFERENCES public.member_documents(id) ON DELETE SET NULL,
+        status text DEFAULT 'preparing' NOT NULL,
+        status_note text,
+        reference text,
+        submitted_at timestamp with time zone,
+        created_at timestamp with time zone DEFAULT now() NOT NULL,
+        updated_at timestamp with time zone DEFAULT now() NOT NULL,
+        UNIQUE (member_id, opportunity_key),
+        UNIQUE (member_id, number)
+      );
+
+      -- The assistant's short memory of a private conversation.
+      CREATE TABLE IF NOT EXISTS public.assistant_threads (
+        member_id uuid PRIMARY KEY REFERENCES public.members(id) ON DELETE CASCADE,
+        messages jsonb DEFAULT '[]'::jsonb NOT NULL,
+        pending jsonb,
+        updated_at timestamp with time zone DEFAULT now() NOT NULL
+      );
+
+      -- Switches the owner sets from WhatsApp (status viewing and the like).
+      CREATE TABLE IF NOT EXISTS public.bot_settings (
+        key text PRIMARY KEY,
+        value text NOT NULL,
+        updated_at timestamp with time zone DEFAULT now() NOT NULL
+      );
+    `,
+  },
 ];

@@ -48,7 +48,7 @@ It downloads the bot into `~/phc-bot` and runs `./ctl.sh start`, which checks th
 ## What works today
 
 **Two ways in**
-- **WhatsApp** — 34 commands for members already in the community
+- **WhatsApp** — 55 commands for members already in the community, plus a private-chat career assistant
 - **Web** — a search page at `/` for anyone, no app or account needed, backed by the same engine
 
 **Opportunity search**
@@ -518,6 +518,33 @@ Each opportunity arrives as a card with the position, organisation, location, sa
 **How it decides:** every 30 minutes each site's listing page is read and links not seen before are kept. On general job boards, only health-looking titles are considered. **DeepSeek** (`DEEPSEEK_API_KEY`) then picks the public-health opportunities from them, and when a card is about to go out, reads that listing's page for the details. Without a key, keyword rules decide and the card shows the title and link only. robots.txt is honoured, and sites whose terms forbid automated reading — LinkedIn, Indeed, Glassdoor, Upwork, FlexJobs — are not used. Everything found also becomes searchable through `.job`, `.scholarships` and the other search commands.
 
 **LinkedIn:** LinkedIn offers no public job-search API (its official API only lets approved partners post jobs) and its terms forbid scraping, so the bot reaches LinkedIn's postings — and those of other large job sites — through **JSearch** on RapidAPI (`JSEARCH_API_KEY`, free plan). Four public-health searches for Kenya run daily, rotating through public health, community health, health records, epidemiology, nutrition, M&E, occupational health and WASH, and DeepSeek filters the results like everything else.
+
+**Quality checks before anything is sent.** Each listing's page is read for its real dates (schema.org JobPosting data, "posted on" meta, and deadline wording in the text). A listing is left out when it is **expired**, **closed**, **stale** (more than 30 days old with no deadline) or carries no dates at all. The same opportunity found on several sites is recognised by its link, its application email, or a similar title from a compatible organisation in the same town; it is kept once, and the kept record is updated with the better details (deadline, salary, the employer's link) instead of being sent again. A publication log records every opportunity sent to every chat, so nothing reaches the same chat twice. `.pushall` sends everything still open and not yet sent there, including items found earlier in the week; `.alerts` sends one at a time on the schedule; `.jobs today` / `.jobs latest` search what was posted recently.
+
+### Career assistant (private chat)
+
+Members chat with the bot privately, in their own words: "build me a CV for a data officer role", "find nutrition internships and apply to the ones I qualify for", or just send their CV as a PDF or Word file. DeepSeek orchestrates through tools; the critical steps are ordinary code.
+
+| Command | Does |
+|---|---|
+| `.cv [modern\|classic\|compact] [role]` | Build a CV (PDF and Word) from the member's profile, tailored to a role |
+| `.profile [change]` | See or update the saved profile |
+| `.apply <n…>` | Prepare applications for results of the last search |
+| `.applications` | Application history and status |
+| `sent N` | The member sent application N themselves |
+| `submit N` → `confirm N` | Fill a simple online form, show a screenshot, submit only after `confirm N` |
+| `.deletemydata` / `delete my data` | Delete profile, documents and applications (asks to confirm) |
+
+- **Consent first:** nothing is saved until the member replies YES to a privacy note. Data is deleted after 12 months without use.
+- **No fabrication:** the CV is written by DeepSeek and then checked in code. Any employer, role, institution, skill, certification or number that is not in the profile is removed.
+- **Applications:** for each one the bot finds the official channel. For email, it confirms the address appears on the advert. For a portal, it confirms the link is on the employer's page. It then writes a fit analysis, a tailored CV and a cover letter (PDF and Word), and an email with a one-tap `mailto:` link that the **member sends** from their own mailbox.
+- **Portals:** the bot fills only simple public forms, with no login and no CAPTCHA, and only after the member approves a screenshot. It never stores passwords. Each opportunity gets one application per member.
+- **Privacy:** CVs and applications only ever happen in a private chat; in a group these commands send the member a private message instead. Every query is scoped to the member.
+- **Needs:** `DEEPSEEK_API_KEY`. `TAVILY_API_KEY` is used to find the employer's official page. The Docker image includes Chromium for the PDFs and forms.
+
+### Bot number switches (administrators)
+
+`.autoview`, `.autolike`, `.alwaysonline`, `.recording` (each `on`/`off`, all off by default) and `.contacts` (a vCard file of everyone who has messaged the bot). Saving deleted messages is not offered.
 
 ### Welcome messages
 

@@ -20,6 +20,8 @@ import makeWASocket, {
   useMultiFileAuthState,
   WAMessageStubType,
   type GroupMetadata,
+  downloadMediaMessage,
+  type WAMessage,
   type WAMessageKey,
   type WASocket,
   type proto,
@@ -31,6 +33,7 @@ import { TtlCache } from '../core/cache.js';
 import { logger, redactJid } from '../core/logger.js';
 import { handleMessage, type InboundMessage, type Transport } from '../commands/router.js';
 import { moderateGroupMessage } from '../moderation/service.js';
+import { getSetting } from '../career/store.js';
 import { findGroupSettings } from '../db/repositories/groups.js';
 import { MAX_TAGGED, renderWelcome, WelcomeBatcher } from '../groups/welcome.js';
 import { acquireSessionLock, releaseSessionLock } from './session-lock.js';
@@ -350,6 +353,13 @@ function buildTransport(sock: WASocket): Transport {
 /** Transport that can react to the specific message that triggered a command. */
 function buildTransportFor(sock: WASocket, key: proto.IMessageKey): Transport {
   return {
+    async busy(chatJid) {
+      try {
+        await sock.sendPresenceUpdate((await switchOn('recording')) ? 'recording' : 'composing', chatJid);
+      } catch {
+        // cosmetic only
+      }
+    },
     async sendText(chatJid, text, options) {
       const sent = await sock.sendMessage(chatJid, {
         text,
@@ -426,6 +436,7 @@ async function connect(): Promise<void> {
     }
 
     if (connection === 'open') {
+      startPresenceHeartbeat(sock);
       status.connected = true;
       status.selfJid = sock.user?.id ?? null;
       status.lastConnectedAt = new Date();
@@ -495,10 +506,73 @@ async function connect(): Promise<void> {
   });
 }
 
+let presenceTimer: ReturnType<typeof setInterval> | null = null;
+
+/** "Always online": refresh the available presence every few minutes, when switched on. */
+function startPresenceHeartbeat(sock: WASocket): void {
+  if (presenceTimer) clearInterval(presenceTimer);
+  presenceTimer = setInterval(() => {
+    void (async () => {
+      if (socket !== sock) return;
+      try {
+        await sock.sendPresenceUpdate((await switchOn('alwaysonline')) ? 'available' : 'unavailable');
+      } catch {
+        // cosmetic only
+      }
+    })();
+  }, 4 * 60_000);
+  presenceTimer.unref();
+}
+
+// ── Owner switches (set from WhatsApp, read here) ─────────────────────────────
+
+const switchCache = new TtlCache<boolean>(60_000, 50);
+
+/** Is an owner switch on? Cached for a minute; off when unset. */
+export async function switchOn(name: string): Promise<boolean> {
+  const cached = switchCache.get(name);
+  if (cached !== undefined) return cached;
+  const value = (await getSetting(name).catch(() => null)) === 'on';
+  switchCache.set(name, value);
+  return value;
+}
+
+export function forgetSwitch(name: string): void {
+  switchCache.delete(name);
+}
+
+/** Statuses: viewed and/or liked, when the owner switched that on. */
+async function onStatus(sock: WASocket, key: WAMessageKey): Promise<void> {
+  if (key.fromMe || !key.participant) return;
+  if (await switchOn('autoview')) await sock.readMessages([key]);
+  if (await switchOn('autolike')) {
+    const own = sock.user?.id ? baseJid(sock.user.id) : null;
+    await sock.sendMessage('status@broadcast', { react: { text: '💚', key } }, { statusJidList: [baseJid(key.participant), ...(own ? [own] : [])] });
+  }
+}
+
+/** The owner's own "Message yourself" chat. */
+function isOwnChat(sock: WASocket, chatJid: string): boolean {
+  const target = baseJid(chatJid);
+  return [sock.user?.id, sock.user?.lid].some((jid) => jid && baseJid(jid) === target);
+}
+
+export type DocumentHandler = (input: { senderJid: string; chatJid: string; pushName: string | null; bytes: Buffer; mime: string; fileName: string }) => Promise<void>;
+let documentHandler: DocumentHandler | null = null;
+
+/** Who receives documents members send in private chats (CVs). */
+export function setDocumentHandler(handler: DocumentHandler): void {
+  documentHandler = handler;
+}
+
 async function onMessage(sock: WASocket, message: proto.IWebMessageInfo): Promise<void> {
   const key = message.key as WAMessageKey;
   const chatJid = key.remoteJid;
-  if (!chatJid || chatJid === 'status@broadcast') return;
+  if (chatJid === 'status@broadcast') {
+    await onStatus(sock, key).catch((cause) => log.debug({ err: String(cause) }, 'status handling failed'));
+    return;
+  }
+  if (!chatJid) return;
 
   // Never re-handle an echo of something we just sent, which would loop.
   if (key.id && recentlySent.get(key.id)) return;
@@ -515,6 +589,32 @@ async function onMessage(sock: WASocket, message: proto.IWebMessageInfo): Promis
       return false;
     });
     if (moderated) return;
+  }
+
+  // The assistant only ever answers what members send — never what this
+  // account sends to other people — except in the owner's own chat.
+  const conversational = !key.fromMe || isOwnChat(sock, chatJid);
+
+  // A CV sent as a document in a private chat goes to the assistant.
+  const documentMessage = message.message?.documentMessage ?? message.message?.documentWithCaptionMessage?.message?.documentMessage;
+  if (!isGroup && conversational && documentMessage && documentHandler && !(text ?? '').trim().startsWith(env.COMMAND_PREFIX)) {
+    const senderJid = resolveSender(sock, key, false, chatJid);
+    try {
+      const bytes = (await downloadMediaMessage(message as WAMessage, 'buffer', {})) as Buffer;
+      if (bytes.length > 0 && bytes.length <= 10_000_000) {
+        await documentHandler({
+          senderJid,
+          chatJid,
+          pushName: message.pushName ?? null,
+          bytes,
+          mime: documentMessage.mimetype ?? 'application/octet-stream',
+          fileName: documentMessage.fileName ?? 'document',
+        });
+      }
+    } catch (cause) {
+      log.warn({ err: cause instanceof Error ? cause.message : String(cause) }, 'could not read a document');
+    }
+    return;
   }
 
   if (!text) return;
@@ -536,6 +636,8 @@ async function onMessage(sock: WASocket, message: proto.IWebMessageInfo): Promis
     isGroup,
     text,
     mentionedJids: extractMentions(message),
+    conversational,
+    pushName: message.pushName ?? null,
   };
   await handleMessage(inbound, buildTransportFor(sock, key));
 }
@@ -798,6 +900,11 @@ export const trackerMessenger = {
   async sendDocument(chatJid: string, data: Buffer, fileName: string, mimetype: string, caption?: string): Promise<void> {
     if (!socket) throw new Error('WhatsApp is not connected');
     const sent = await socket.sendMessage(chatJid, { document: data, fileName, mimetype, ...(caption ? { caption } : {}) });
+    rememberSent(sent?.key?.id);
+  },
+  async sendImage(chatJid: string, data: Buffer, caption?: string): Promise<void> {
+    if (!socket) throw new Error('WhatsApp is not connected');
+    const sent = await socket.sendMessage(chatJid, { image: data, ...(caption ? { caption } : {}) });
     rememberSent(sent?.key?.id);
   },
 };

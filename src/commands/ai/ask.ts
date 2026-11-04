@@ -19,6 +19,7 @@ import { truncate } from '../../core/text.js';
 import { POWERED_BY } from '../../whatsapp/format.js';
 import type { Command } from '../types.js';
 import { runSearch } from '../opportunities/run-search.js';
+import { assistantAvailable, runAssistant } from '../../career/agent.js';
 
 const askLog = logger.child({ component: 'ask' });
 
@@ -156,6 +157,13 @@ export const askCommand: Command = {
       await context.reply(
         `That question is ${question.length} characters. Please keep it under ${MAX_QUESTION_CHARS}.`,
       );
+      return;
+    }
+
+    // In a private chat the full career assistant answers: it can search,
+    // build CVs and prepare applications as well as answer anything.
+    if (!context.isGroup && assistantAvailable()) {
+      await runAssistant({ memberId: context.member.id, chatJid: context.chatJid, isAdmin: context.isAdmin, text: question, reply: (message) => context.reply(message) });
       return;
     }
 

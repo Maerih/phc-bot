@@ -136,6 +136,30 @@ In a group, only group admins can turn alerts on or off. In a private chat with 
 The assistant never makes up job adverts or links: listings always come from a real search. For your own health, it gives general information only. Please see a clinician for personal care.
 \end{tip}
 
+\section{Your CV and applications}
+
+Chat with the bot in a \textbf{private chat}, in your own words. It builds your CV, finds opportunities that suit you and prepares each application: a CV tailored to the advert, a cover letter, and the email or portal steps. CVs and applications are always handled privately; in a group, these commands send you a private message instead.
+
+\begin{commands}
+\textit{Build me a CV for a data officer role} & Just ask. The bot asks for anything it still needs \\
+\textit{(send your CV as a PDF or Word file)} & The bot reads it and fills in your profile \\
+\textit{Find nutrition internships and apply to the ones I qualify for} & Searches, ranks by fit and prepares the applications \\
+\cmd{.cv} / \cmd{.cv} \textit{role} & Build your CV (PDF and Word) for a kind of role \\
+\cmd{.cv classic} \textit{role} / \cmd{.cv compact} \textit{role} & The same, in another design (\textit{modern} is the default) \\
+\cmd{.profile} & See your saved profile; \cmd{.profile} \textit{change} to update it \\
+\cmd{.apply 2} & Prepare an application for result 2 of your last search \\
+\cmd{.applications} & Your applications and where each one stands \\
+\cmd{sent 3} & Tell the bot you have sent application 3 \\
+\cmd{submit 3} then \cmd{confirm 3} & For a simple online form: the bot fills it and shows you a picture; it is sent only after you reply \cmd{confirm 3} \\
+\cmd{delete my data} or \cmd{.deletemydata} & Delete your profile, CVs and application history (you are asked to confirm) \\
+\end{commands}
+
+\begin{tip}
+\textbf{Honest by design.} Your CV uses only what you told the bot: it never adds jobs, skills, grades or numbers you do not have. Applications by email are prepared for \textbf{you} to send from your own email (the bot gives you a ready email and a one-tap link). The bot never applies for you without your approval and never asks for passwords.
+\end{tip}
+
+\textbf{Your privacy.} Before saving anything, the bot asks your permission. Only you can see your profile and applications. They are deleted after 12 months without use, or at any time when you send \cmd{delete my data}.
+
 \section{For group admins}
 
 These work for the group's admins. The bot must be an admin of the group too.
@@ -187,6 +211,8 @@ Only the numbers set up as administrators of the bot can use these.
 \cmd{.alerts interval 3-5} & How often opportunity cards go out (here every 3 to 5 minutes) \\
 \cmd{.alerts pause} / \cmd{.alerts resume} & Pause or resume updates in every chat \\
 \end{commands}
+
+\cmd{.pushall} sends every opportunity that is still open and has not yet been sent to a chat, including ones found earlier in the week. Expired listings and repeats of the same job from other websites are left out, and nothing goes to the same chat twice.
 
 \vfill
 \begin{center}

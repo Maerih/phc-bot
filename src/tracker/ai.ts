@@ -121,6 +121,9 @@ export async function classifyTitles(
 
 interface ExtractedFields {
   relevant?: boolean;
+  posted?: string | null;
+  closed?: boolean;
+  apply_email?: string | null;
   title?: string;
   organization?: string | null;
   type?: string;
@@ -182,6 +185,9 @@ export async function extractCard(input: {
         '"salary": as stated, else null, "deadline": "YYYY-MM-DD" or null,',
         '"terms": e.g. "Full-time, 2-year contract", "requirements": education/experience in one line,',
         '"summary": 2 plain sentences on the role, max 300 characters,',
+        '"posted": the date the advert was posted "YYYY-MM-DD" or null, "closed": true if the page says',
+        'the opportunity has closed or expired, "apply_email": the email address applications must be sent',
+        'to, exactly as written on the page, or null,',
         '"apply_link": the number of the link that is the EMPLOYER\'s own application or advert page',
         '(not the job board, not social media), or null if there is none}.',
         'Use null for anything the page does not say. Never guess a salary or deadline.',
@@ -220,6 +226,13 @@ export async function extractCard(input: {
       applyUrl,
       original: pick !== undefined || input.site.employer === true,
       foundOn: input.site.name,
+      posted: isoDate(fields.posted),
+      // Only an address that really is on the page.
+      emails:
+        typeof fields.apply_email === 'string' && input.pageText.toLowerCase().includes(fields.apply_email.trim().toLowerCase())
+          ? [fields.apply_email.trim().toLowerCase()]
+          : [],
+      ...(fields.closed === true ? { closed: true } : {}),
     };
   } catch (cause) {
     log.warn({ err: cause instanceof Error ? cause.message : String(cause) }, 'card extraction failed');

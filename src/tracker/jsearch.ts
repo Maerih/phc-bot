@@ -50,6 +50,7 @@ interface JSearchJob {
   job_country?: string | null;
   job_is_remote?: boolean | null;
   job_offer_expiration_datetime_utc?: string | null;
+  job_posted_at_datetime_utc?: string | null;
   job_min_salary?: number | null;
   job_max_salary?: number | null;
   job_salary_currency?: string | null;
@@ -103,6 +104,7 @@ export function toHit(job: JSearchJob): JSearchHit | null {
     applyUrl: url,
     original: job.job_apply_is_direct === true,
     foundOn: job.job_publisher ? `${job.job_publisher} (via JSearch)` : 'JSearch',
+    posted: job.job_posted_at_datetime_utc?.slice(0, 10) ?? null,
   };
   return { url, label: `${title} — ${card.organization ?? ''}`, card };
 }

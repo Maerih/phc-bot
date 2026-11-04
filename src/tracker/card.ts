@@ -27,6 +27,12 @@ export interface OpportunityCard {
   original: boolean;
   /** The site it was found on. */
   foundOn: string;
+  /** When the listing was posted (YYYY-MM-DD), when known. */
+  posted?: string | null;
+  /** Application email address(es) stated on the listing. */
+  emails?: string[];
+  /** The page itself says the opportunity has closed. */
+  closed?: boolean;
 }
 
 const TYPE_ICON: Partial<Record<OpportunityType, string>> = {

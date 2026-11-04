@@ -57,7 +57,9 @@ export const trackedSitesConnector: SourceConnector = {
           deadline: card.deadline ? new Date(`${card.deadline}T23:59:59+03:00`) : null,
           applicationUrl: card.applyUrl,
           sourceUrl: row.listing_url,
-          datePosted: row.first_seen_at,
+          // Posted date when the page gave one; otherwise when we first saw it,
+          // unless it was already there on the site's first scan.
+          datePosted: row.posted_on ? new Date(`${row.posted_on}T00:00:00+03:00`) : row.seeded ? null : row.first_seen_at,
           tags: [card.field ?? 'public health'],
           compensation: card.salary,
           externalId: row.url_hash,

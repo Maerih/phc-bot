@@ -85,19 +85,45 @@ async function scanNow(context: CommandContext): Promise<void> {
   );
 }
 
-/** Everything waiting, to this chat, as one list and a spreadsheet. */
+/**
+ * Every valid, unpublished opportunity — including those collected earlier in
+ * the week — checked, de-duplicated, grouped by category and sent as a list
+ * and a spreadsheet. A platform administrator broadcasts to every chat with
+ * alerts on (and this one); a group admin, to this group.
+ */
 async function pushAllHere(context: CommandContext): Promise<void> {
   if (!context.isAdmin && !(context.isGroup && (await mayChange(context)))) {
     if (!context.isGroup) await context.reply('Only platform administrators can push every opportunity at once.');
     return;
   }
+  const chats = context.isAdmin ? [...new Set([context.chatJid, ...(await store.subscribers())])] : [context.chatJid];
   await context.react('📤');
   try {
-    const count = await pushAll(context.chatJid);
-    if (count === 0) await context.reply('Nothing is waiting to be sent right now. Try `.scan` first.');
+    const result = await pushAll(chats, (message) => context.reply(message));
+    const dropped = result.checked.expired + result.checked.closed + result.checked.stale + result.checked.undated;
+    await context.reply(
+      result.published === 0
+        ? [
+            '✅ Nothing new to send: every valid opportunity has already gone to these chats.',
+            dropped + result.checked.duplicate > 0
+              ? `(${dropped} expired or outdated and ${result.checked.duplicate} duplicates were left out.)`
+              : '',
+            'Try `.scan` to look for new ones.',
+          ]
+            .filter(Boolean)
+            .join('\n')
+        : [
+            `✅ *${result.published}* opportunities sent to ${result.chats} chat${result.chats === 1 ? '' : 's'}.`,
+            `Left out: ${dropped} expired or outdated, ${result.checked.duplicate} duplicates, ${result.checked.irrelevant} not public health.`,
+            'Each chat gets each opportunity only once; running `.pushall` again sends only what is new.',
+          ].join('\n'),
+    );
   } catch (cause) {
-    context.log.warn({ err: String(cause) }, 'push all failed');
-    await context.reply('Could not send the list just now. Please try again in a minute.');
+    const message = cause instanceof Error ? cause.message : String(cause);
+    context.log.warn({ err: message }, 'push all failed');
+    await context.reply(
+      message.includes('already running') ? 'A `.pushall` is already running — its results will arrive shortly.' : 'Could not send the list just now. Please try again in a minute.',
+    );
   }
 }
 

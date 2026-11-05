@@ -34,7 +34,7 @@ import { groupInfoCommand } from './group/info.js';
 import { askCommand } from './ai/ask.js';
 import { alertsCommand, pushAllCommand, scanCommand } from './alerts/alerts.js';
 import { applicationsCommand, applyCommand, cvCommand, deleteDataCommand, profileCommand } from './career/career.js';
-import { aiModeCommand, contactsCommand, ownerSwitchCommands } from './admin/owner.js';
+import { aiModeCommand, contactsCommand, ownerSwitchCommands, stopCommand } from './admin/owner.js';
 import {
   conferencesCommand,
   eventsCommand,
@@ -106,6 +106,7 @@ const COMMANDS: readonly Command[] = [
   // owner
   ...ownerSwitchCommands,
   aiModeCommand,
+  stopCommand,
   contactsCommand,
   // result navigation
   nextCommand,

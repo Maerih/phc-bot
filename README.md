@@ -548,7 +548,8 @@ Use this when the bot runs on a personal number:
 
 - **`.aimode off`** (the default): the AI answers only people who started with an AI command such as `.cv`, `.ask`, `.profile` or `.apply`, for 30 minutes after their last message. Every other private message is left for the owner.
 - **`.aimode on`**: the AI answers every private message.
-- **`.aimode stop` / `.aimode start`**, typed inside someone's chat, mute or unmute the AI for that person. The confirmation goes to the owner's own chat.
+- **`.aimode stop` / `.aimode start`**, typed inside a chat (including the owner's own), mute or unmute the AI there. In someone else's chat, the confirmation goes to the owner's own chat.
+- **`.stop`** ends the AI conversation in a chat at once. Members can use it too.
 - **When the owner types in a chat themselves**, the AI steps back there automatically.
 
 ### Bot number switches (administrators)

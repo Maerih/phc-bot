@@ -171,10 +171,11 @@ If the bot runs on your own WhatsApp number, decide when the AI may answer priva
 \cmd{.aimode off} & \textbf{The default.} Your private messages are yours. The AI answers only someone who starts with an AI command (\cmd{.cv}, \cmd{.ask}, \cmd{.profile}, \cmd{.apply}\ldots), and keeps talking with them for 30 minutes after their last message \\
 \cmd{.aimode on} & The AI answers every private message \\
 \cmd{.aimode} & Which mode is on, and how many conversations are open \\
-\cmd{.aimode stop} \textit{(in their chat)} & Never let the AI answer this person; \cmd{.aimode start} to undo. The confirmation goes to your own ``Message yourself'' chat, not to them \\
+\cmd{.aimode stop} \textit{(in a chat)} & The AI never answers in that chat; \cmd{.aimode start} to undo. In someone else's chat the confirmation goes to your own ``Message yourself'' chat, not to them \\
+\cmd{.stop} & End the AI conversation in this chat right now. Members can use it too \\
 \end{commands}
 
-\textbf{Taking over:} as soon as you type in a chat yourself, the AI stops answering there (for 12 hours when the mode is on). Your ``Message yourself'' chat always talks to the AI.
+\textbf{Taking over:} as soon as you type in a chat yourself, the AI stops answering there (for 12 hours when the mode is on). Your ``Message yourself'' chat follows the same rules: start with \cmd{.ask} or \cmd{.cv} to talk to the AI there, and \cmd{.stop} when you are done.
 
 \subsection{Career assistant}
 

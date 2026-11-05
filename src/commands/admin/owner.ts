@@ -5,7 +5,7 @@
 import { vcards } from './vcard.js';
 import { connection as sql } from '../../db/client.js';
 import { careerMessenger } from '../../career/messenger.js';
-import { aiStatus, openSession, setAiMode, setChatStopped } from '../../career/dm-mode.js';
+import { aiStatus, endSession, openSession, setAiMode, setChatStopped } from '../../career/dm-mode.js';
 import { getSetting, setSetting } from '../../career/store.js';
 import { forgetSwitch } from '../../whatsapp/client.js';
 import type { Command } from '../types.js';
@@ -52,9 +52,24 @@ export const ownerSwitchCommands: Command[] = SWITCHES.map(switchCommand);
 const AI_HELP = [
   '*.aimode on* — the AI answers every private message',
   '*.aimode off* — the AI answers only people who start with an AI command (.cv, .ask, .profile, .apply…), for 30 minutes; everyone else is yours',
-  'In someone’s chat: *.aimode stop* — never answer this person; *.aimode start* — answer them again',
+  'In a chat: *.aimode stop* — the AI never answers there; *.aimode start* — it answers again',
+  '*.stop* — end the AI conversation in a chat right now (anyone can use it)',
   'When you type in a chat yourself, the AI steps back there automatically.',
 ].join('\n');
+
+/** End the AI conversation in this chat now. Anyone: a member who is done, or the owner. */
+export const stopCommand: Command = {
+  name: 'stop',
+  aliases: ['endchat', 'bye'],
+  category: 'system',
+  summary: 'End the AI conversation in this private chat',
+  usage: '.stop',
+  async handler(context) {
+    if (context.isGroup) return;
+    endSession(context.chatJid);
+    await context.react('👋').catch(() => undefined);
+  },
+};
 
 /** Whether the AI answers private messages: the bot may be on a personal number. */
 export const aiModeCommand: Command = {
@@ -69,7 +84,9 @@ export const aiModeCommand: Command = {
     const wanted = context.argv[0]?.toLowerCase();
     // Typed inside someone else's private chat: act on that chat, and answer
     // the owner privately rather than in front of the other person.
-    const inOtherChat = !context.isGroup && context.chatJid.split('@')[0] !== context.senderJid.split('@')[0];
+    const own = (jid: string | null): string => (jid ?? '').split('@')[0]!.split(':')[0]!;
+    const inOwnChat = !context.isGroup && [context.selfJid, context.selfLid, context.senderJid].some((jid) => jid && own(jid) === own(context.chatJid));
+    const inOtherChat = !context.isGroup && !inOwnChat;
     const tellOwner = async (text: string): Promise<void> => {
       if (inOtherChat) {
         await context.react('🤖').catch(() => undefined);
@@ -87,15 +104,16 @@ export const aiModeCommand: Command = {
       return;
     }
     if (wanted === 'stop' || wanted === 'start') {
-      if (context.isGroup || !inOtherChat) {
-        await context.reply('Send *.aimode stop* or *.aimode start* inside that person’s private chat.');
+      if (context.isGroup) {
+        await context.reply('Send *.aimode stop* or *.aimode start* inside a private chat.');
         return;
       }
       await setChatStopped(context.chatJid, wanted === 'stop');
       if (wanted === 'start') openSession(context.chatJid);
+      const who = inOwnChat ? 'in this chat' : `+${own(context.chatJid)}`;
       await tellOwner(wanted === 'stop'
-        ? `🔕 The AI will not answer +${context.chatJid.split('@')[0]} any more (their commands still work). Send *.aimode start* in that chat to undo.`
-        : `🤖 The AI is answering +${context.chatJid.split('@')[0]} again.`);
+        ? `🔕 The AI will not answer ${inOwnChat ? 'here' : who} any more (commands still work). Send *.aimode start* ${inOwnChat ? 'here' : 'in that chat'} to undo.`
+        : `🤖 The AI is answering ${inOwnChat ? 'here' : who} again.`);
       return;
     }
     const status = await aiStatus();

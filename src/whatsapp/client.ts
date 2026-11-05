@@ -600,7 +600,8 @@ async function onMessage(sock: WASocket, message: proto.IWebMessageInfo): Promis
   // The assistant only ever answers what members send — never what this
   // account sends to other people — except in the owner's own chat.
   // In private chats, only when the AI mode allows it (see career/dm-mode).
-  const conversational = ownChat || (!key.fromMe && (isGroup || (await aiMayAnswer(chatJid).catch(() => false))));
+  // The owner's own chat follows the same rules, so .aimode and .stop work there too.
+  const conversational = isGroup ? !key.fromMe : (ownChat || !key.fromMe) && (await aiMayAnswer(chatJid).catch(() => false));
 
   // A CV sent as a document in a private chat goes to the assistant.
   const documentMessage = message.message?.documentMessage ?? message.message?.documentWithCaptionMessage?.message?.documentMessage;

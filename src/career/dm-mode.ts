@@ -13,7 +13,8 @@
  * - `.aimode stop` / `.aimode start` inside one chat: never / again, for that chat.
  *
  * Commands always work for everyone; this only governs plain messages and
- * documents. The owner's own "Message yourself" chat always reaches the AI.
+ * documents. `.stop` ends a conversation at once. The owner's own "Message
+ * yourself" chat follows the same rules.
  */
 import { getSetting, setSetting } from './store.js';
 
@@ -73,6 +74,11 @@ export async function setChatStopped(chatJid: string, stopped: boolean): Promise
 export function openSession(chatJid: string): void {
   sessions.set(chatJid, Date.now() + SESSION_MS);
   takenOver.delete(chatJid);
+}
+
+/** `.stop`: end the AI conversation in this chat now. */
+export function endSession(chatJid: string): void {
+  sessions.delete(chatJid);
 }
 
 /** The owner wrote in this chat themselves: the AI steps back. */

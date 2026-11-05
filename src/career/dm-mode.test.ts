@@ -6,7 +6,7 @@ vi.mock('./store.js', () => ({
   setSetting: async (key: string, value: string) => void settings.set(key, value),
 }));
 
-const { aiMayAnswer, openSession, ownerTookOver, resetDmMode, setAiMode, setChatStopped } = await import('./dm-mode.js');
+const { aiMayAnswer, endSession, openSession, ownerTookOver, resetDmMode, setAiMode, setChatStopped } = await import('./dm-mode.js');
 
 const FRIEND = '254711111111@s.whatsapp.net';
 const MEMBER = '254722222222@s.whatsapp.net';
@@ -40,6 +40,12 @@ describe('when the AI may answer a private chat', () => {
     expect(await aiMayAnswer(MEMBER)).toBe(false);
     await setChatStopped(MEMBER, false);
     expect(await aiMayAnswer(MEMBER)).toBe(true);
+  });
+
+  it('.stop ends a conversation at once', async () => {
+    openSession(MEMBER);
+    endSession(MEMBER);
+    expect(await aiMayAnswer(MEMBER)).toBe(false);
   });
 
   it('ends a conversation after 30 quiet minutes', async () => {

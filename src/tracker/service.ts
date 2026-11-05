@@ -522,6 +522,7 @@ async function publish(
   send: (chatJid: string, rows: store.TrackedRow[]) => Promise<void>,
 ): Promise<number> {
   let delivered = 0;
+  const sent = new Set<string>();
   for (const chatJid of chats) {
     const already = await store.publishedTo(chatJid, rows.map((row) => row.url_hash));
     const fresh = rows.filter((row) => !already.has(row.url_hash));
@@ -529,6 +530,7 @@ async function publish(
     try {
       await send(chatJid, fresh);
       await store.recordPublications(fresh.map((row) => ({ hash: row.url_hash, chatJid, channel })));
+      for (const row of fresh) sent.add(row.url_hash);
       delivered += 1;
     } catch (cause) {
       log.warn({ chat: redactJid(chatJid), err: cause instanceof Error ? cause.message : String(cause) }, 'not delivered');
@@ -536,7 +538,7 @@ async function publish(
     // A short gap between chats keeps WhatsApp from treating this as a burst.
     await new Promise((resolve) => setTimeout(resolve, 1500));
   }
-  for (const row of rows) await store.markAnnounced(row.url_hash);
+  for (const row of rows) if (sent.has(row.url_hash) && !row.announced_at) await store.markAnnounced(row.url_hash);
   return delivered;
 }
 
@@ -560,15 +562,23 @@ export async function dripOnce(): Promise<boolean> {
   const chats = await store.subscribers();
   if (chats.length === 0) return false;
   // Nothing checked yet? Check a few now rather than wait for the background.
-  if ((await store.readyToPublish(1)).length === 0) await checkPending(3, 1);
-  for (const row of await store.readyToPublish(10)) {
-    if (!(await stillValid(row))) continue;
-    const text = renderCard(row.card!);
-    const delivered = await publish([row], chats, 'drip', (chatJid) => messenger!.sendText(chatJid, text));
-    log.info({ site: row.site_slug, chats: delivered }, 'opportunity announced');
-    return true;
+  if ((await store.readyFor(chats, 1)).length === 0) await checkPending(3, 1);
+  // Each chat gets its own next opportunity: the newest one still open that it
+  // has not had. A group that joined later catches up on what is still open.
+  let sentAny = false;
+  for (const chatJid of chats) {
+    for (const row of await store.readyFor([chatJid], 10)) {
+      if (!(await stillValid(row))) continue;
+      const text = renderCard(row.card!);
+      const delivered = await publish([row], [chatJid], 'drip', (chat) => messenger!.sendText(chat, text));
+      if (delivered > 0) {
+        log.info({ site: row.site_slug, chat: redactJid(chatJid) }, 'opportunity announced');
+        sentAny = true;
+      }
+      break;
+    }
   }
-  return false;
+  return sentAny;
 }
 
 /** The Friday report and weekend message to every subscribed chat. */
@@ -621,7 +631,7 @@ export async function pushAll(chats: string[], onProgress?: (message: string) =>
     const checked = await checkPending(1000, 3);
 
     const ready: store.TrackedRow[] = [];
-    for (const row of await store.readyToPublish(1000)) {
+    for (const row of await store.readyFor(chats, 1000)) {
       if (await stillValid(row)) ready.push(row);
     }
     const label = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', timeZone: env.TIMEZONE });
@@ -717,7 +727,7 @@ export function stopTracker(): void {
   timer = null;
 }
 
-export async function trackerStatus(): Promise<{
+export async function trackerStatus(chatJid?: string): Promise<{
   enabled: boolean;
   paused: boolean;
   sites: number;
@@ -735,7 +745,7 @@ export async function trackerStatus(): Promise<{
     sites: TRACKED_SITES.length,
     ai: aiAvailable(),
     lastScan,
-    queue: await store.queueLength(),
+    queue: await store.queueLength(chatJid),
     subscribers: (await store.subscribers()).length,
     nextDripAt: nextDripAt > 0 ? new Date(nextDripAt) : null,
     jsearch: jsearchConfigured(),

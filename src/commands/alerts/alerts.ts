@@ -31,7 +31,7 @@ async function mayChange(context: CommandContext): Promise<boolean> {
 }
 
 async function status(context: CommandContext): Promise<void> {
-  const state = await trackerStatus();
+  const state = await trackerStatus(context.chatJid);
   const here = await store.isSubscribed(context.chatJid);
   const lastScan = state.lastScan
     ? `${state.lastScan.at.toLocaleString('en-GB', { timeZone: env.TIMEZONE, hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}, ${state.lastScan.found} new public-health finds`

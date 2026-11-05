@@ -76,10 +76,16 @@ export async function nextInQueue(limit: number): Promise<TrackedRow[]> {
     limit ${limit}`;
 }
 
-export async function queueLength(): Promise<number> {
-  const [row] = await sql<{ n: number }[]>`
-    select count(*)::int as n from tracked_items
-    where relevant and announced_at is null and not skipped and duplicate_of is null`;
+/** Waiting for this chat (or, without one, not sent anywhere yet), checked or still to check. */
+export async function queueLength(chatJid?: string): Promise<number> {
+  const [row] = chatJid
+    ? await sql<{ n: number }[]>`
+        select count(*)::int as n from tracked_items t
+        where relevant and not skipped and duplicate_of is null
+          and not exists (select 1 from publications p where p.url_hash = t.url_hash and p.chat_jid = ${chatJid})`
+    : await sql<{ n: number }[]>`
+        select count(*)::int as n from tracked_items
+        where relevant and announced_at is null and not skipped and duplicate_of is null`;
   return row?.n ?? 0;
 }
 
@@ -134,20 +140,28 @@ export async function countsBySite(): Promise<Map<string, { total: number; relev
 export async function pendingChecks(limit: number): Promise<TrackedRow[]> {
   return sql.unsafe<TrackedRow[]>(
     `select ${COLUMNS} from tracked_items
-     where relevant and not skipped and duplicate_of is null and announced_at is null and checked_at is null
-     order by seeded asc, first_seen_at desc limit $1`,
+     where relevant and not skipped and duplicate_of is null and checked_at is null
+     order by announced_at is not null, seeded asc, first_seen_at desc limit $1`,
     [limit],
   );
 }
 
-/** Checked, valid and not yet published: what the drip and .pushall send. */
-export async function readyToPublish(limit: number): Promise<TrackedRow[]> {
+/**
+ * Checked, valid, and not yet sent to at least one of these chats: what the
+ * drip and .pushall send. Per chat, so a group that subscribes later still
+ * receives what is open, and nothing reaches the same chat twice.
+ */
+export async function readyFor(chats: string[], limit: number): Promise<TrackedRow[]> {
+  if (chats.length === 0) return [];
   return sql.unsafe<TrackedRow[]>(
-    `select ${COLUMNS} from tracked_items
-     where relevant and not skipped and duplicate_of is null and announced_at is null
+    `select ${COLUMNS} from tracked_items t
+     where relevant and not skipped and duplicate_of is null
        and checked_at is not null and card is not null
+       and exists (
+         select 1 from jsonb_array_elements_text($2::jsonb) as chat(jid)
+         where not exists (select 1 from publications p where p.url_hash = t.url_hash and p.chat_jid = chat.jid))
      order by seeded asc, coalesce(posted_on, first_seen_at::date) desc, first_seen_at desc limit $1`,
-    [limit],
+    [limit, JSON.stringify(chats)],
   );
 }
 

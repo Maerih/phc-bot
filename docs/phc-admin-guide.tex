@@ -163,6 +163,19 @@ All are \textbf{off} until you turn them on, with \cmd{on} or \cmd{off} after th
 \textbf{Use sparingly.} WhatsApp can limit numbers that look automated; \cmd{alwaysonline} and \cmd{autolike} are the most noticeable. Saving deleted messages is deliberately not offered: members delete messages on purpose.
 \end{tip}
 
+\subsection{AI in private chats (personal number)}
+
+If the bot runs on your own WhatsApp number, decide when the AI may answer private messages. Commands such as \cmd{.cv} always work for everyone; this is only about ordinary messages.
+
+\begin{commands}
+\cmd{.aimode off} & \textbf{The default.} Your private messages are yours. The AI answers only someone who starts with an AI command (\cmd{.cv}, \cmd{.ask}, \cmd{.profile}, \cmd{.apply}\ldots), and keeps talking with them for 30 minutes after their last message \\
+\cmd{.aimode on} & The AI answers every private message \\
+\cmd{.aimode} & Which mode is on, and how many conversations are open \\
+\cmd{.aimode stop} \textit{(in their chat)} & Never let the AI answer this person; \cmd{.aimode start} to undo. The confirmation goes to your own ``Message yourself'' chat, not to them \\
+\end{commands}
+
+\textbf{Taking over:} as soon as you type in a chat yourself, the AI stops answering there (for 12 hours when the mode is on). Your ``Message yourself'' chat always talks to the AI.
+
 \subsection{Career assistant}
 
 Members chat privately with the bot to build CVs and prepare applications; see the User Guide. It needs \cmd{DEEPSEEK\_API\_KEY}; \cmd{TAVILY\_API\_KEY} lets it find the official application page. CVs are made as PDF and Word files inside the bot's container (it includes a browser for this), stored in the database, and deleted together with the member's profile after 12 months without use or when they send \cmd{delete my data}. Email applications are prepared for the member to send; simple online forms are filled only after the member checks a screenshot and replies \cmd{confirm}. No mailbox or passwords are stored.

@@ -13,6 +13,7 @@
  *    restarting the process.
  *  - message text is never logged; only the resolved command name is.
  */
+import { openSession } from '../career/dm-mode.js';
 import { env } from '../config/env.js';
 import { TtlCache } from '../core/cache.js';
 import { logger, redactJid } from '../core/logger.js';
@@ -40,6 +41,8 @@ export interface InboundMessage {
    * for anything the account itself sent to other people.
    */
   conversational?: boolean;
+  /** Sent by the bot's own account in someone else's chat (the owner typing there). */
+  fromMe?: boolean;
   /** The sender's WhatsApp display name, when known. */
   pushName?: string | null;
 }
@@ -190,6 +193,9 @@ export async function handleMessage(message: InboundMessage, transport: Transpor
   const startedAt = Date.now();
   try {
     await command.handler(context);
+    // A member started with an AI command in a private chat: their follow-ups
+    // (answers, "YES", details) reach the assistant for a while.
+    if (!message.isGroup && command.category === 'ai' && message.fromMe !== true) openSession(message.chatJid);
     commandLog.info({ durationMs: Date.now() - startedAt }, 'command handled');
     return true;
   } catch (cause) {

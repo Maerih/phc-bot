@@ -7,6 +7,7 @@ import { touchMember } from '../db/repositories/members.js';
 import type { ConversationHandler } from '../commands/router.js';
 import type { DocumentHandler } from '../whatsapp/client.js';
 import { assistantAvailable, handleDocument, runAssistant } from './agent.js';
+import { openSession } from './dm-mode.js';
 import { careerMessenger } from './messenger.js';
 import { purgeInactive } from './store.js';
 
@@ -14,6 +15,7 @@ const log = logger.child({ component: 'career' });
 
 export const converse: ConversationHandler = async ({ message, transport, member, isAdmin }) => {
   if (!assistantAvailable()) return;
+  if (!message.isGroup) openSession(message.chatJid);
   await transport.busy?.(message.chatJid);
   await runAssistant({
     memberId: member.id,
@@ -28,6 +30,7 @@ export const receiveDocument: DocumentHandler = async ({ senderJid, chatJid, pus
   if (!assistantAvailable()) return;
   const member = await touchMember(senderJid, pushName);
   if (member.isBlocked) return;
+  openSession(chatJid);
   await handleDocument(
     { memberId: member.id, chatJid, isAdmin: false, text: '', reply: async (text) => careerMessenger()?.sendText(chatJid, text) },
     bytes,

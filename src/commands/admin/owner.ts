@@ -5,6 +5,7 @@
 import { vcards } from './vcard.js';
 import { connection as sql } from '../../db/client.js';
 import { careerMessenger } from '../../career/messenger.js';
+import { aiStatus, openSession, setAiMode, setChatStopped } from '../../career/dm-mode.js';
 import { getSetting, setSetting } from '../../career/store.js';
 import { forgetSwitch } from '../../whatsapp/client.js';
 import type { Command } from '../types.js';
@@ -47,6 +48,65 @@ function switchCommand(item: Switch): Command {
 }
 
 export const ownerSwitchCommands: Command[] = SWITCHES.map(switchCommand);
+
+const AI_HELP = [
+  '*.aimode on* — the AI answers every private message',
+  '*.aimode off* — the AI answers only people who start with an AI command (.cv, .ask, .profile, .apply…), for 30 minutes; everyone else is yours',
+  'In someone’s chat: *.aimode stop* — never answer this person; *.aimode start* — answer them again',
+  'When you type in a chat yourself, the AI steps back there automatically.',
+].join('\n');
+
+/** Whether the AI answers private messages: the bot may be on a personal number. */
+export const aiModeCommand: Command = {
+  name: 'aimode',
+  aliases: ['assistantmode', 'autoreply'],
+  category: 'admin',
+  adminOnly: true,
+  summary: 'Choose when the AI answers private messages (on, off, stop or start a chat)',
+  usage: '.aimode [on|off|stop|start]',
+  examples: ['.aimode', '.aimode off', '.aimode stop'],
+  async handler(context) {
+    const wanted = context.argv[0]?.toLowerCase();
+    // Typed inside someone else's private chat: act on that chat, and answer
+    // the owner privately rather than in front of the other person.
+    const inOtherChat = !context.isGroup && context.chatJid.split('@')[0] !== context.senderJid.split('@')[0];
+    const tellOwner = async (text: string): Promise<void> => {
+      if (inOtherChat) {
+        await context.react('🤖').catch(() => undefined);
+        await careerMessenger()?.sendText(context.senderJid, text).catch(() => undefined);
+      } else {
+        await context.reply(text);
+      }
+    };
+
+    if (wanted === 'on' || wanted === 'off') {
+      await setAiMode(wanted === 'on');
+      await tellOwner(wanted === 'on'
+        ? '🤖 AI mode *ON*: the AI answers every private message (except chats you stopped or are typing in).'
+        : '🙋 AI mode *OFF*: private messages are yours. The AI answers only people who start with an AI command such as .cv or .ask.');
+      return;
+    }
+    if (wanted === 'stop' || wanted === 'start') {
+      if (context.isGroup || !inOtherChat) {
+        await context.reply('Send *.aimode stop* or *.aimode start* inside that person’s private chat.');
+        return;
+      }
+      await setChatStopped(context.chatJid, wanted === 'stop');
+      if (wanted === 'start') openSession(context.chatJid);
+      await tellOwner(wanted === 'stop'
+        ? `🔕 The AI will not answer +${context.chatJid.split('@')[0]} any more (their commands still work). Send *.aimode start* in that chat to undo.`
+        : `🤖 The AI is answering +${context.chatJid.split('@')[0]} again.`);
+      return;
+    }
+    const status = await aiStatus();
+    await tellOwner([
+      `*AI in private chats:* ${status.mode ? 'ON — answers everyone' : 'OFF — only people who used an AI command'}`,
+      `Conversations open now: ${status.sessions} · chats you took over: ${status.takenOver} · chats stopped: ${status.stopped}`,
+      '',
+      AI_HELP,
+    ].join('\n'));
+  },
+};
 
 /** Everyone who has messaged the bot, as a vCard file to import into a phone in one tap. */
 export const contactsCommand: Command = {

@@ -11,6 +11,7 @@
  * that requires a human to pair again, and silently looping would just burn
  * attempts against WhatsApp.
  */
+import { ownerTookOver, aiMayAnswer } from '../career/dm-mode.js';
 import { Boom } from '@hapi/boom';
 import makeWASocket, {
   DisconnectReason,
@@ -579,6 +580,11 @@ async function onMessage(sock: WASocket, message: proto.IWebMessageInfo): Promis
 
   const text = extractText(message);
   const isGroup = chatJid.endsWith('@g.us');
+  const ownChat = !isGroup && isOwnChat(sock, chatJid);
+
+  // The owner typed in a private chat themselves (not a command, not the
+  // bot's own reply): the AI steps back there.
+  if (!isGroup && key.fromMe && !ownChat && !message.message?.protocolMessage && !(text ?? '').trim().startsWith(env.COMMAND_PREFIX)) ownerTookOver(chatJid);
 
   // Before command handling, so a silenced member cannot run commands either,
   // and for media too, which has no text. Never for our own messages.
@@ -593,7 +599,8 @@ async function onMessage(sock: WASocket, message: proto.IWebMessageInfo): Promis
 
   // The assistant only ever answers what members send — never what this
   // account sends to other people — except in the owner's own chat.
-  const conversational = !key.fromMe || isOwnChat(sock, chatJid);
+  // In private chats, only when the AI mode allows it (see career/dm-mode).
+  const conversational = ownChat || (!key.fromMe && (isGroup || (await aiMayAnswer(chatJid).catch(() => false))));
 
   // A CV sent as a document in a private chat goes to the assistant.
   const documentMessage = message.message?.documentMessage ?? message.message?.documentWithCaptionMessage?.message?.documentMessage;
@@ -637,6 +644,7 @@ async function onMessage(sock: WASocket, message: proto.IWebMessageInfo): Promis
     text,
     mentionedJids: extractMentions(message),
     conversational,
+    fromMe: Boolean(key.fromMe) && !ownChat,
     pushName: message.pushName ?? null,
   };
   await handleMessage(inbound, buildTransportFor(sock, key));

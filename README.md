@@ -542,6 +542,15 @@ Members chat with the bot privately, in their own words: "build me a CV for a da
 - **Privacy:** CVs and applications only ever happen in a private chat; in a group these commands send the member a private message instead. Every query is scoped to the member.
 - **Needs:** `DEEPSEEK_API_KEY`. `TAVILY_API_KEY` is used to find the employer's official page. The Docker image includes Chromium for the PDFs and forms.
 
+### AI in private chats (administrators)
+
+Use this when the bot runs on a personal number:
+
+- **`.aimode off`** (the default): the AI answers only people who started with an AI command such as `.cv`, `.ask`, `.profile` or `.apply`, for 30 minutes after their last message. Every other private message is left for the owner.
+- **`.aimode on`**: the AI answers every private message.
+- **`.aimode stop` / `.aimode start`**, typed inside someone's chat, mute or unmute the AI for that person. The confirmation goes to the owner's own chat.
+- **When the owner types in a chat themselves**, the AI steps back there automatically.
+
 ### Bot number switches (administrators)
 
 `.autoview`, `.autolike`, `.alwaysonline`, `.recording` (each `on`/`off`, all off by default) and `.contacts` (a vCard file of everyone who has messaged the bot). Saving deleted messages is not offered.
